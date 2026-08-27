@@ -59,6 +59,7 @@ project:
         title: 'Projets'
         subtitle: '{0} Aucun projet suivi|{1} Un projet suivi|]1,Inf[ %count% projets suivis'
         add_project: 'Ajouter un projet'
+        discover_from_github: 'Découvrir depuis GitHub'
         empty_state: 'Aucun projet suivi pour le moment.'
         never_scanned: 'Jamais scanné'
         table:
@@ -66,6 +67,20 @@ project:
             dependency_managers: 'Gestionnaires'
             manifests: 'Manifests'
             last_scan: 'Dernier scan'
+    discover:
+        title: 'Découvrir des dépôts depuis GitHub'
+        hint: 'Entre un compte utilisateur ou une organisation GitHub pour lister ses dépôts et importer en masse ceux que tu veux suivre.'
+        account_placeholder: 'ex. symfony'
+        search: 'Rechercher'
+        empty: 'Aucun dépôt trouvé pour ce compte.'
+        private: 'Privé'
+        already_imported: 'Déjà suivi'
+        import_selected: 'Importer les dépôts sélectionnés'
+        table:
+            repository: 'Dépôt'
+            visibility: 'Visibilité'
+        import:
+            queued: '{0} Aucun dépôt mis en file d''attente.|{1} Un dépôt a été mis en file d''attente pour import.|]1,Inf[ %count% dépôts ont été mis en file d''attente pour import.'
     show:
         back_to_projects: 'Retour aux projets'
         rescan:

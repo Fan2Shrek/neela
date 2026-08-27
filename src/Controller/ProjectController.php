@@ -22,6 +22,8 @@ use App\Service\Package\PackageUpdateChecker;
 use App\Service\Technology\DetectedTechnology;
 use App\Service\Technology\TechnologyDetector;
 use App\Service\Technology\TechnologySupportEvaluator;
+use App\Service\VCS\Client\Exception\VCSException;
+use App\Service\VCS\RepositoryDiscoveryInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,6 +47,7 @@ final class ProjectController extends AbstractController
         private readonly TechnologySupportEvaluator $technologySupportEvaluator,
         private readonly MessageBusInterface $bus,
         private readonly TranslatorInterface $translator,
+        private readonly RepositoryDiscoveryInterface $repositoryDiscovery,
     ) {
     }
 
@@ -94,6 +97,53 @@ final class ProjectController extends AbstractController
         return $this->render('project/new.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    #[Route('/projects/discover', name: 'app_project_discover', methods: ['GET'])]
+    public function discover(Request $request): Response
+    {
+        $account = trim((string) $request->query->get('account', ''));
+        $repositories = [];
+        $alreadyImportedSshLinks = [];
+        $error = null;
+
+        if ('' !== $account) {
+            try {
+                $repositories = $this->repositoryDiscovery->discoverRepositories($account);
+
+                $alreadyImportedSshLinks = array_map(
+                    static fn (Project $project): string => $project->getSshLink(),
+                    $this->projectRepository->findAll(),
+                );
+            } catch (VCSException $exception) {
+                $error = $exception->getMessage();
+            }
+        }
+
+        return $this->render('project/discover.html.twig', [
+            'account' => $account,
+            'repositories' => $repositories,
+            'alreadyImportedSshLinks' => $alreadyImportedSshLinks,
+            'error' => $error,
+        ]);
+    }
+
+    #[Route('/projects/discover', name: 'app_project_discover_import', methods: ['POST'])]
+    public function discoverImport(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('discover_import', $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $sshLinks = $request->request->all('ssh_links');
+
+        foreach ($sshLinks as $sshLink) {
+            $this->bus->dispatch(new ImportProjectCommand($sshLink, scanNow: true));
+        }
+
+        $this->addFlash('success', $this->translator->trans('project.discover.import.queued', ['%count%' => \count($sshLinks)]));
+
+        return $this->redirectToRoute('app_project_index');
     }
 
     #[Route('/projects/{id}', name: 'app_project_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]

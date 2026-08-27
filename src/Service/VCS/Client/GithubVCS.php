@@ -8,8 +8,10 @@ use App\Repository\AppSettingsRepository;
 use App\Service\VCS\Client\Exception\GitHubApiException;
 use App\Service\VCS\Client\Exception\RepositoryAccessDeniedException;
 use App\Service\VCS\Client\Exception\RepositoryNotFoundException;
+use App\Service\VCS\DiscoveredRepository;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
+use App\Service\VCS\RepositoryDiscoveryInterface;
 use App\Service\VCS\VCSInterface;
 use App\Service\VCS\VCSProject;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -17,7 +19,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionIn
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-final class GithubVCS implements VCSInterface
+final class GithubVCS implements VCSInterface, RepositoryDiscoveryInterface
 {
     private const API_BASE_URL = 'https://api.github.com';
 
@@ -108,6 +110,61 @@ final class GithubVCS implements VCSInterface
         }
 
         return $decoded;
+    }
+
+    /**
+     * A GitHub login is either an organization or a user, never both, so a 404 from the
+     * "orgs" endpoint unambiguously means "try it as a user" rather than "not found".
+     * Capped at the first 100 repositories (GitHub's max page size) — pagination isn't
+     * implemented yet, which is fine for the account/small-org sizes this targets today.
+     */
+    public function discoverRepositories(string $account): array
+    {
+        $response = $this->request('GET', \sprintf('/orgs/%s/repos', $account), ['query' => ['per_page' => 100, 'type' => 'all']]);
+
+        if (404 === $response->getStatusCode()) {
+            $response = $this->request('GET', \sprintf('/users/%s/repos', $account), ['query' => ['per_page' => 100]]);
+        }
+
+        if (404 === $response->getStatusCode()) {
+            throw new RepositoryNotFoundException(\sprintf('No GitHub user or organization named "%s" was found.', $account));
+        }
+
+        if (\in_array($response->getStatusCode(), [401, 403], true)) {
+            throw new RepositoryAccessDeniedException(\sprintf('Access to "%s"\'s repositories was denied.', $account));
+        }
+
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode >= 400) {
+            throw new GitHubApiException(\sprintf('GitHub API returned status code %d for "%s".', $statusCode, $account));
+        }
+
+        try {
+            $data = $response->toArray(false);
+        } catch (HttpExceptionInterface $exception) {
+            throw new GitHubApiException(\sprintf('Unable to decode the GitHub API response for "%s": %s', $account, $exception->getMessage()), previous: $exception);
+        }
+
+        $repositories = [];
+        foreach ($data as $repo) {
+            if (true === ($repo['fork'] ?? false)) {
+                // Forks are rarely "your" project to track dependency updates for.
+                continue;
+            }
+
+            if (!isset($repo['full_name'], $repo['ssh_url'])) {
+                continue;
+            }
+
+            $repositories[] = new DiscoveredRepository(
+                name: $repo['full_name'],
+                sshLink: $repo['ssh_url'],
+                private: (bool) ($repo['private'] ?? false),
+            );
+        }
+
+        return $repositories;
     }
 
     private function getDefaultBranch(string $owner, string $repo): string

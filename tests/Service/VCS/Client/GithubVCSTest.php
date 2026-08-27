@@ -237,6 +237,78 @@ final class GithubVCSTest extends TestCase
         }
     }
 
+    public function testDiscoverRepositoriesReturnsOrgReposWhenTheAccountIsAnOrganization(): void
+    {
+        $requestedUrls = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requestedUrls) {
+            $requestedUrls[] = $url;
+
+            return new MockResponse(json_encode([
+                ['full_name' => 'acme/api', 'ssh_url' => 'git@github.com:acme/api.git', 'private' => true, 'fork' => false],
+                ['full_name' => 'acme/website', 'ssh_url' => 'git@github.com:acme/website.git', 'private' => false, 'fork' => false],
+            ]));
+        });
+
+        $repositories = ($this->client($httpClient))->discoverRepositories('acme');
+
+        self::assertCount(2, $repositories);
+        self::assertSame('acme/api', $repositories[0]->name);
+        self::assertSame('git@github.com:acme/api.git', $repositories[0]->sshLink);
+        self::assertTrue($repositories[0]->private);
+        self::assertFalse($repositories[1]->private);
+        self::assertStringContainsString('/orgs/acme/repos', $requestedUrls[0]);
+    }
+
+    public function testDiscoverRepositoriesFallsBackToUserWhenTheAccountIsNotAnOrganization(): void
+    {
+        $requestedUrls = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requestedUrls) {
+            $requestedUrls[] = $url;
+
+            if (str_contains($url, '/orgs/')) {
+                return new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]);
+            }
+
+            return new MockResponse(json_encode([
+                ['full_name' => 'Fan2Shrek/kard', 'ssh_url' => 'git@github.com:Fan2Shrek/kard.git', 'private' => false, 'fork' => false],
+            ]));
+        });
+
+        $repositories = ($this->client($httpClient))->discoverRepositories('Fan2Shrek');
+
+        self::assertCount(1, $repositories);
+        self::assertSame('Fan2Shrek/kard', $repositories[0]->name);
+        self::assertStringContainsString('/orgs/Fan2Shrek/repos', $requestedUrls[0]);
+        self::assertStringContainsString('/users/Fan2Shrek/repos', $requestedUrls[1]);
+    }
+
+    public function testDiscoverRepositoriesExcludesForks(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode([
+                ['full_name' => 'acme/original', 'ssh_url' => 'git@github.com:acme/original.git', 'private' => false, 'fork' => false],
+                ['full_name' => 'acme/a-fork', 'ssh_url' => 'git@github.com:acme/a-fork.git', 'private' => false, 'fork' => true],
+            ])),
+        ]);
+
+        $repositories = ($this->client($httpClient))->discoverRepositories('acme');
+
+        self::assertCount(1, $repositories);
+        self::assertSame('acme/original', $repositories[0]->name);
+    }
+
+    public function testDiscoverRepositoriesThrowsWhenNeitherOrgNorUserExists(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]),
+            new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]),
+        ]);
+
+        $this->expectException(RepositoryNotFoundException::class);
+
+        ($this->client($httpClient))->discoverRepositories('does-not-exist');
+    }
+
     private function client(HttpClientInterface $httpClient, ?string $githubToken = null): GithubVCS
     {
         $settings = new AppSettings();

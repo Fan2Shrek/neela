@@ -59,6 +59,7 @@ project:
         title: 'Projects'
         subtitle: '{0} No projects tracked yet|{1} One project tracked|]1,Inf[ %count% projects tracked'
         add_project: 'Add a project'
+        discover_from_github: 'Discover from GitHub'
         empty_state: 'No projects tracked yet.'
         never_scanned: 'Never scanned'
         table:
@@ -66,6 +67,20 @@ project:
             dependency_managers: 'Dependency managers'
             manifests: 'Manifests'
             last_scan: 'Last scan'
+    discover:
+        title: 'Discover repositories from GitHub'
+        hint: 'Enter a GitHub user or organization login to list its repositories and bulk-import the ones you want to track.'
+        account_placeholder: 'e.g. symfony'
+        search: 'Search'
+        empty: 'No repositories found for this account.'
+        private: 'Private'
+        already_imported: 'Already tracked'
+        import_selected: 'Import selected repositories'
+        table:
+            repository: 'Repository'
+            visibility: 'Visibility'
+        import:
+            queued: '{0} No repository was queued for import.|{1} One repository has been queued for import.|]1,Inf[ %count% repositories have been queued for import.'
     show:
         back_to_projects: 'Back to projects'
         rescan:

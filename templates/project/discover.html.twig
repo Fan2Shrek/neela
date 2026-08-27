@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'project.discover.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="form-page">
+        <h1>{{ 'project.discover.title'|trans }}</h1>
+        <p class="form-hint">{{ 'project.discover.hint'|trans }}</p>
+
+        <form method="get" action="{{ path('app_project_discover') }}" class="filter-bar">
+            <input type="text" name="account" value="{{ account }}" placeholder="{{ 'project.discover.account_placeholder'|trans }}" class="form-input">
+            <button type="submit" class="button button--primary">{{ 'project.discover.search'|trans }}</button>
+        </form>
+
+        {% if error %}
+            <div class="form-errors">{{ error }}</div>
+        {% elseif account and repositories is empty %}
+            <p class="empty-state">{{ 'project.discover.empty'|trans }}</p>
+        {% elseif repositories is not empty %}
+            <form method="post" action="{{ path('app_project_discover_import') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('discover_import') }}">
+
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>{{ 'project.discover.table.repository'|trans }}</th>
+                            <th>{{ 'project.discover.table.visibility'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for repository in repositories %}
+                            {% set alreadyImported = repository.sshLink in alreadyImportedSshLinks %}
+                            <tr>
+                                <td>
+                                    {% if alreadyImported %}
+                                        <input type="checkbox" disabled>
+                                    {% else %}
+                                        <input type="checkbox" name="ssh_links[]" value="{{ repository.sshLink }}" checked>
+                                    {% endif %}
+                                </td>
+                                <td class="projects-table__name">{{ repository.name }}</td>
+                                <td>
+                                    {% if repository.private %}
+                                        <span class="badge badge--neutral">{{ 'project.discover.private'|trans }}</span>
+                                    {% endif %}
+                                    {% if alreadyImported %}
+                                        <span class="text-muted">{{ 'project.discover.already_imported'|trans }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button--primary">{{ 'project.discover.import_selected'|trans }}</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}
