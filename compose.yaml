@@ -39,7 +39,10 @@ services:
     # Consumes the async transport, whichever MESSENGER_TRANSPORT_DSN a self-hosted
     # deployment picks (doctrine, amqp, ...). Bounded lifetime so the worker restarts
     # periodically instead of accumulating entities across thousands of messages.
-    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M -vv
+    # php.ini's memory_limit (128M) is below the graceful --memory-limit threshold below,
+    # so PHP's hard OOM kill always wins the race. Override it here so the worker actually
+    # gets to self-restart cleanly instead of dying mid-message and leaving scans stuck.
+    command: php -d memory_limit=512M bin/console messenger:consume async --time-limit=3600 --memory-limit=256M -vv
     depends_on:
       database:
         condition: service_healthy
