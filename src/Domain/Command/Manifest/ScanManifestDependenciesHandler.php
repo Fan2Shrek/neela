@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Command\Project;
+namespace App\Domain\Command\Manifest;
 
 use App\Enum\ScanStatus;
 use App\Repository\ScanRepository;
-use App\Service\ProjectScanner;
+use App\Service\ManifestScanner;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-final class ScanProjectDependenciesHandler
+final class ScanManifestDependenciesHandler
 {
     public function __construct(
-        private ProjectScanner $projectScanner,
+        private ManifestScanner $manifestScanner,
         private ScanRepository $scanRepository,
         private EntityManagerInterface $entityManager,
     ) {
     }
 
-    public function __invoke(ScanProjectDependenciesCommand $command): void
+    public function __invoke(ScanManifestDependenciesCommand $command): void
     {
         $scan = $this->scanRepository->find($command->scanId)
             ?? throw new \RuntimeException(\sprintf('Scan "%d" not found.', $command->scanId));
@@ -30,7 +30,7 @@ final class ScanProjectDependenciesHandler
         $this->entityManager->flush();
 
         try {
-            $this->projectScanner->scan($scan->getProject());
+            $this->manifestScanner->scan($scan->getManifest());
         } catch (\Throwable $exception) {
             $scan->setStatus(ScanStatus::FAILED);
             $scan->setError($exception->getMessage());

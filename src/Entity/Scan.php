@@ -14,9 +14,9 @@ class Scan
     #[ORM\Column]
     private int $id;
 
-    #[ORM\ManyToOne(targetEntity: Project::class)]
+    #[ORM\ManyToOne(targetEntity: Manifest::class)]
     #[ORM\JoinColumn(nullable: false)]
-    private Project $project;
+    private Manifest $manifest;
 
     #[ORM\Column(length: 255, enumType: ScanStatus::class)]
     private ScanStatus $status;
@@ -30,9 +30,9 @@ class Scan
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $error = null;
 
-    public function __construct(Project $project, ScanStatus $status = ScanStatus::PENDING)
+    public function __construct(Manifest $manifest, ScanStatus $status = ScanStatus::PENDING)
     {
-        $this->project = $project;
+        $this->manifest = $manifest;
         $this->status = $status;
     }
 
@@ -41,14 +41,14 @@ class Scan
         return $this->id;
     }
 
-    public function getProject(): Project
+    public function getManifest(): Manifest
     {
-        return $this->project;
+        return $this->manifest;
     }
 
-    public function setProject(Project $project): static
+    public function setManifest(Manifest $manifest): static
     {
-        $this->project = $project;
+        $this->manifest = $manifest;
 
         return $this;
     }

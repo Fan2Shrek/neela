@@ -8,6 +8,7 @@ use App\Service\VCS\Client\Exception\GitHubApiException;
 use App\Service\VCS\Client\Exception\RepositoryAccessDeniedException;
 use App\Service\VCS\Client\Exception\RepositoryNotFoundException;
 use App\Service\VCS\Client\GithubVCS;
+use App\Service\VCS\VCSProject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -115,5 +116,41 @@ final class GithubVCSTest extends TestCase
         $this->expectException(GitHubApiException::class);
 
         (new GithubVCS($httpClient))->getTree('git@github.com:acme/broken.git');
+    }
+
+    public function testGetVCSInfoParsesOwnerAndRepoFromSshLink(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']])),
+        ]);
+
+        $info = (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
+
+        self::assertEquals(new VCSProject(name: 'my-project', owner: 'acme'), $info);
+    }
+
+    public function testGetVCSInfoRequestsTheCorrectRepoPath(): void
+    {
+        $requestedUrl = null;
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requestedUrl) {
+            $requestedUrl = $url;
+
+            return new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']]));
+        });
+
+        (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
+
+        self::assertSame('https://api.github.com/repos/acme/my-project', $requestedUrl);
+    }
+
+    public function testGetVCSInfoWithMissingRepositoryThrowsDedicatedException(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]),
+        ]);
+
+        $this->expectException(RepositoryNotFoundException::class);
+
+        (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/missing.git');
     }
 }

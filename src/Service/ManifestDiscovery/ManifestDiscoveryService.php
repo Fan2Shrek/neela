@@ -14,7 +14,7 @@ use App\Service\ManifestDiscovery\Exception\TruncatedTreeException;
 use App\Service\VCS\VCSResolver;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class ManifestDiscoveryService
+final class ManifestDiscoveryService implements ManifestDiscoveryInterface
 {
     public function __construct(
         private readonly VCSResolver $vcsResolver,

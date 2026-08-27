@@ -10,6 +10,7 @@ use App\Service\VCS\Client\Exception\RepositoryNotFoundException;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
 use App\Service\VCS\VCSInterface;
+use App\Service\VCS\VCSProject;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -29,9 +30,18 @@ final class GithubVCS implements VCSInterface
         return str_contains($sshLink, 'github.com');
     }
 
-    public function getVCSInfo(string $projectPath): array
+    public function getVCSInfo(string $projectPath): VCSProject
     {
-        throw new \Exception('Not implemented');
+        [$owner, $repo] = $this->parseOwnerAndRepo($projectPath);
+
+        $response = $this->request('GET', \sprintf('/repos/%s/%s', $owner, $repo));
+
+        $data = $this->decode($response, $owner, $repo);
+
+        return new VCSProject(
+            name: $data['name'] ?? throw new GitHubApiException(\sprintf('Unable to determine the name of "%s/%s".', $owner, $repo)),
+            owner: $data['owner']['login'] ?? throw new GitHubApiException(\sprintf('Unable to determine the owner of "%s/%s".', $owner, $repo)),
+        );
     }
 
     public function getTree(string $sshLink): GitTree

@@ -16,6 +16,7 @@ use App\Service\ManifestDiscovery\ManifestMatcher;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
 use App\Service\VCS\VCSInterface;
+use App\Service\VCS\VCSProject;
 use App\Service\VCS\VCSResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -106,9 +107,9 @@ final class ManifestDiscoveryServiceTest extends TestCase
                 return true;
             }
 
-            public function getVCSInfo(string $projectPath): array
+            public function getVCSInfo(string $projectPath): VCSProject
             {
-                return [];
+                throw new \LogicException('Not needed for this test.');
             }
 
             public function getTree(string $sshLink): GitTree

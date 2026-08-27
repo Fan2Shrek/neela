@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Command\Project;
+namespace App\Domain\Command\Manifest;
 
-final readonly class ScanProjectDependenciesCommand
+final readonly class ScanManifestDependenciesCommand
 {
     public function __construct(
         public int $scanId,

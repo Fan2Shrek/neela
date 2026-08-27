@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'project.form.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="form-page">
+        <h1>{{ 'project.form.title'|trans }}</h1>
+
+        {{ form_start(form, {'action': path('app_project_new')}) }}
+            <div class="form-group">
+                {{ form_label(form.sshLink) }}
+                {{ form_widget(form.sshLink, {attr: {class: 'form-input'}}) }}
+                <p class="form-hint">{{ 'project.form.ssh_link_hint'|trans }}</p>
+                <div class="form-errors">{{ form_errors(form.sshLink) }}</div>
+            </div>
+
+            <div class="form-check">
+                {{ form_widget(form.scanNow) }}
+                {{ form_label(form.scanNow) }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="button button--primary">{{ 'project.form.submit'|trans }}</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

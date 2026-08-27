@@ -11,7 +11,7 @@ interface VCSInterface
 {
     public function supports(string $sshLink): bool;
 
-    public function getVCSInfo(string $projectPath): array;
+    public function getVCSInfo(string $projectPath): VCSProject;
 
     public function getTree(string $sshLink): GitTree;
 }

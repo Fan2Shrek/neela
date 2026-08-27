@@ -1,0 +1,32 @@
+common:
+    close: 'Fermer'
+
+dashboard:
+    add_project: 'Ajouter un projet'
+    projects_tracked: '{0} Aucun projet suivi|{1} Un projet suivi|]1,Inf[ %count% projets suivis'
+    scans_up_to_date: 'scans à jour'
+    scans_pending: 'scans en attente'
+    scans_failed: 'scans en erreur'
+    empty_state: 'Aucun projet suivi pour le moment.'
+    never_scanned: 'Jamais scanné'
+    table:
+        project: 'Projet'
+        dependency_managers: 'Gestionnaires'
+        manifests: 'Manifests'
+        last_scan: 'Dernier scan'
+
+scan_status:
+    pending: 'En attente'
+    in_progress: 'En cours'
+    completed: 'À jour'
+    failed: 'En erreur'
+
+project:
+    form:
+        title: 'Ajouter un projet'
+        ssh_link: 'Lien SSH'
+        ssh_link_hint: 'L''URL de clonage SSH du dépôt, ex. git@github.com:owner/repo.git'
+        scan_now: 'Scanner maintenant'
+        submit: 'Ajouter'
+
+project.import.queued: 'Le projet a été mis en file d''attente pour import.'
