@@ -22,14 +22,18 @@
     &--pending,
     &--in_progress,
     &--partially_up_to_date,
-    &--technology_outdated {
+    &--technology_outdated,
+    &--moderate,
+    &--low {
         background-color: var(--neela-warning-bg);
         color: var(--neela-warning);
     }
 
     &--failed,
     &--outdated,
-    &--end_of_life {
+    &--end_of_life,
+    &--critical,
+    &--high {
         background-color: var(--neela-danger-bg);
         color: var(--neela-danger);
     }

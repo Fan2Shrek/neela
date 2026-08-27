@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Enum\ProjectUpdateStatus;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
+use App\Repository\VulnerabilityRepository;
 use App\Service\Messenger\QueueDepthProvider;
 use App\Service\Project\ProjectUpdateStatusCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ final class DashboardController extends AbstractController
         private readonly ScanRepository $scanRepository,
         private readonly ProjectUpdateStatusCalculator $projectUpdateStatusCalculator,
         private readonly QueueDepthProvider $queueDepthProvider,
+        private readonly VulnerabilityRepository $vulnerabilityRepository,
     ) {
     }
 
@@ -67,6 +69,7 @@ final class DashboardController extends AbstractController
             'projectsNeedingUpdate' => $projectsNeedingUpdate,
             'asyncQueueDepth' => $this->queueDepthProvider->getAsyncQueueDepth(),
             'failedQueueDepth' => $this->queueDepthProvider->getFailedQueueDepth(),
+            'vulnerableDependencyCount' => $this->vulnerabilityRepository->countAffectedDependencies(),
         ]);
     }
 }

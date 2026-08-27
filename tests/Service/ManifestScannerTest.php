@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Domain\Command\Dependency\CheckDependencyVulnerabilitiesCommand;
 use App\Domain\Command\Package\GetPackageVersionCommand;
 use App\Entity\Dependency;
 use App\Entity\DependencyManager;
@@ -80,18 +81,23 @@ final class ManifestScannerTest extends TestCase
         $entityManager->method('persist')->willReturnCallback(function (object $entity) use (&$persisted): void {
             $persisted[] = $entity;
 
+            // Simulate Doctrine assigning the auto-generated id on persist.
             if ($entity instanceof Package) {
-                // Simulate Doctrine assigning the auto-generated id on persist.
-                $property = new \ReflectionProperty(Package::class, 'id');
-                $property->setValue($entity, 42);
+                (new \ReflectionProperty(Package::class, 'id'))->setValue($entity, 42);
+            } elseif ($entity instanceof Dependency) {
+                (new \ReflectionProperty(Dependency::class, 'id'))->setValue($entity, 99);
             }
         });
 
+        $dispatched = [];
         $bus = $this->createMock(MessageBusInterface::class);
-        $bus->expects(self::once())
+        $bus->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(static fn (GetPackageVersionCommand $command) => 42 === $command->packageId))
-            ->willReturn(new Envelope(new \stdClass()));
+            ->willReturnCallback(function (object $command) use (&$dispatched): Envelope {
+                $dispatched[] = $command;
+
+                return new Envelope($command);
+            });
 
         $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus);
 
@@ -107,6 +113,12 @@ final class ManifestScannerTest extends TestCase
         self::assertSame('^6.4', $persisted[2]->getConstraint());
         self::assertSame('v6.4.18', $persisted[2]->getLockedVersion());
         self::assertSame('require', $persisted[2]->getDependencyType());
+
+        self::assertInstanceOf(GetPackageVersionCommand::class, $dispatched[0]);
+        self::assertSame(42, $dispatched[0]->packageId);
+
+        self::assertInstanceOf(CheckDependencyVulnerabilitiesCommand::class, $dispatched[1]);
+        self::assertSame(99, $dispatched[1]->dependencyId);
     }
 
     public function testScanUpdatesAnExistingDependencyInstead(): void
@@ -128,17 +140,22 @@ final class ManifestScannerTest extends TestCase
         $packageRepository->method('findOneBy')->willReturn($package);
 
         $existingDependency = new Dependency($manifest, $package, '^6.3', 'v6.3.0', 'require');
+        (new \ReflectionProperty(Dependency::class, 'id'))->setValue($existingDependency, 123);
         $dependencyRepository = $this->createStub(DependencyRepository::class);
         $dependencyRepository->method('findOneBy')->willReturn($existingDependency);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('persist');
 
+        $dispatched = [];
         $bus = $this->createMock(MessageBusInterface::class);
-        $bus->expects(self::once())
+        $bus->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(static fn (GetPackageVersionCommand $command) => 7 === $command->packageId))
-            ->willReturn(new Envelope(new \stdClass()));
+            ->willReturnCallback(function (object $command) use (&$dispatched): Envelope {
+                $dispatched[] = $command;
+
+                return new Envelope($command);
+            });
 
         $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus);
 
@@ -146,6 +163,12 @@ final class ManifestScannerTest extends TestCase
 
         self::assertSame('^6.4', $existingDependency->getConstraint());
         self::assertSame('v6.4.19', $existingDependency->getLockedVersion());
+
+        self::assertInstanceOf(GetPackageVersionCommand::class, $dispatched[0]);
+        self::assertSame(7, $dispatched[0]->packageId);
+
+        self::assertInstanceOf(CheckDependencyVulnerabilitiesCommand::class, $dispatched[1]);
+        self::assertSame(123, $dispatched[1]->dependencyId);
     }
 
     private function project(): Project

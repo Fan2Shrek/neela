@@ -15,6 +15,7 @@ use App\Repository\ManifestRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
 use App\Repository\VersionRepository;
+use App\Repository\VulnerabilityRepository;
 use App\Service\Package\PackageUpdateChecker;
 use App\Service\Technology\DetectedTechnology;
 use App\Service\Technology\TechnologyDetector;
@@ -35,6 +36,7 @@ final class ProjectController extends AbstractController
         private readonly ScanRepository $scanRepository,
         private readonly DependencyRepository $dependencyRepository,
         private readonly VersionRepository $versionRepository,
+        private readonly VulnerabilityRepository $vulnerabilityRepository,
         private readonly PackageUpdateChecker $packageUpdateChecker,
         private readonly TechnologyDetector $technologyDetector,
         private readonly TechnologySupportEvaluator $technologySupportEvaluator,
@@ -148,6 +150,7 @@ final class ProjectController extends AbstractController
             'dependencyCount' => array_sum(array_column($manifestRows, 'dependencyCount')),
             'outdatedDependencyRows' => $outdatedDependencyRows,
             'dependencyType' => $dependencyType,
+            'vulnerabilityRows' => $this->vulnerabilityRepository->findAffectingProject($project),
             'scans' => $this->scanRepository->findByProjectOrderedByMostRecent($project),
             'lastScan' => $this->scanRepository->findLatestForProject($project),
         ]);

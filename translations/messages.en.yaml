@@ -18,6 +18,7 @@ dashboard:
     projects_up_to_date: 'up-to-date projects'
     projects_partially_up_to_date: 'partially up-to-date projects'
     projects_outdated: 'projects with updates available'
+    vulnerable_dependencies: 'vulnerable dependencies'
     projects_needing_update_title: 'Projects with updates available'
     projects_needing_update_empty: 'All projects are up to date.'
     projects_needing_update_status: 'Status'
@@ -94,6 +95,17 @@ project:
             manifests: 'Manifests'
             dependencies: 'Dependencies'
             last_scan: 'Last scan'
+            vulnerabilities: 'Vulnerabilities'
+        vulnerabilities_title: 'Vulnerabilities'
+        vulnerabilities_empty: 'No known vulnerabilities affecting installed versions.'
+        vulnerabilities:
+            severity_unknown: 'Unknown'
+            table:
+                package: 'Package'
+                severity: 'Severity'
+                version: 'Affected version'
+                summary: 'Advisory'
+                manifest: 'Manifest'
 
 project.import.queued: 'The project has been queued for import.'
 

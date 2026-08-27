@@ -25,6 +25,10 @@
                 <span class="stat-tile__value">{{ updateStatusCounts.outdated|default(0) }}</span>
                 <span class="stat-tile__label">{{ 'dashboard.projects_outdated'|trans }}</span>
             </div>
+            <div class="stat-tile{% if vulnerableDependencyCount > 0 %} stat-tile--danger{% endif %}">
+                <span class="stat-tile__value">{{ vulnerableDependencyCount }}</span>
+                <span class="stat-tile__label">{{ 'dashboard.vulnerable_dependencies'|trans }}</span>
+            </div>
         </section>
 
         <section class="content-section">

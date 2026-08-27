@@ -29,6 +29,46 @@
                 <span class="stat-tile__value">{{ lastScan ? lastScan.status|trans : '—' }}</span>
                 <span class="stat-tile__label">{{ 'project.show.stats.last_scan'|trans }}</span>
             </div>
+            <div class="stat-tile{% if vulnerabilityRows is not empty %} stat-tile--danger{% endif %}">
+                <span class="stat-tile__value">{{ vulnerabilityRows|length }}</span>
+                <span class="stat-tile__label">{{ 'project.show.stats.vulnerabilities'|trans }}</span>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'project.show.vulnerabilities_title'|trans }}</h2>
+            {% if vulnerabilityRows is empty %}
+                <p class="empty-state">{{ 'project.show.vulnerabilities_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'project.show.vulnerabilities.table.package'|trans }}</th>
+                            <th>{{ 'project.show.vulnerabilities.table.severity'|trans }}</th>
+                            <th>{{ 'project.show.vulnerabilities.table.version'|trans }}</th>
+                            <th>{{ 'project.show.vulnerabilities.table.summary'|trans }}</th>
+                            <th>{{ 'project.show.vulnerabilities.table.manifest'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in vulnerabilityRows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.vulnerability.package.vendor.name }}/{{ row.vulnerability.package.name }}</td>
+                                <td><span class="badge badge--{{ row.vulnerability.severity|default('unknown')|lower }}">{{ row.vulnerability.severity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span></td>
+                                <td>{{ row.vulnerability.affectedVersion }}</td>
+                                <td>
+                                    {% if row.vulnerability.url %}
+                                        <a href="{{ row.vulnerability.url }}" target="_blank" rel="noopener noreferrer">{{ row.vulnerability.summary|default(row.vulnerability.externalId) }}</a>
+                                    {% else %}
+                                        {{ row.vulnerability.summary|default(row.vulnerability.externalId) }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.dependency.manifest.path }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
         </section>
 
         <section class="content-section">

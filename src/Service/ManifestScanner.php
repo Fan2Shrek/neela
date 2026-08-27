@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Domain\Command\Dependency\CheckDependencyVulnerabilitiesCommand;
 use App\Domain\Command\Package\GetPackageVersionCommand;
 use App\Entity\Dependency;
 use App\Entity\Manifest;
@@ -54,6 +55,8 @@ final class ManifestScanner implements ManifestScannerInterface
         $vendorCache = [];
         /** @var array<string, Package> $packageCache */
         $packageCache = [];
+        /** @var Dependency[] $dependencies */
+        $dependencies = [];
 
         foreach ($definition->getDependencies($manifestContent, $lockContent) as $discovered) {
             if (null === $discovered->lockedVersion) {
@@ -80,9 +83,15 @@ final class ManifestScanner implements ManifestScannerInterface
                 $dependency->setLockedVersion($discovered->lockedVersion);
                 $dependency->setDependencyType($discovered->type);
             }
+
+            $dependencies[] = $dependency;
         }
 
         $this->entityManager->flush();
+
+        foreach ($dependencies as $dependency) {
+            $this->bus->dispatch(new CheckDependencyVulnerabilitiesCommand($dependency->getId()));
+        }
     }
 
     private function resolveVendor(Manifest $manifest, string $name): Vendor
