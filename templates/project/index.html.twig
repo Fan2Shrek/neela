@@ -15,83 +15,86 @@
             </div>
         </header>
 
-        <form method="get" class="filter-bar">
-            <input
-                type="text"
-                name="search"
-                value="{{ search }}"
-                placeholder="{{ 'project.index.filters.search_placeholder'|trans }}"
-                class="form-input"
-                data-controller="symfony--ux-autocomplete--autocomplete"
-                data-symfony--ux-autocomplete--autocomplete-url-value="{{ path('app_project_autocomplete') }}"
-                data-symfony--ux-autocomplete--autocomplete-min-characters-value="1"
-                data-symfony--ux-autocomplete--autocomplete-no-results-found-text-value="{{ 'project.index.filters.no_results'|trans }}"
-            >
-            <select name="dependency_manager" class="form-input">
-                <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
-                {% for dependencyManager in dependencyManagers %}
-                    <option value="{{ dependencyManager.name }}" {{ dependencyManager.name == dependencyManagerName ? 'selected' : '' }}>{{ dependencyManager.name }}</option>
-                {% endfor %}
-            </select>
-            <select name="update_status" class="form-input">
-                <option value="">{{ 'project.index.filters.all_update_statuses'|trans }}</option>
-                {% for status in ['up_to_date', 'partially_up_to_date', 'outdated'] %}
-                    <option value="{{ status }}" {{ status == updateStatusFilter ? 'selected' : '' }}>{{ ('project_update_status.' ~ status)|trans }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="button button--primary">{{ 'package.index.filters.apply'|trans }}</button>
-            {% if isFiltered %}
-                <a href="{{ path('app_project_index') }}" class="button button--secondary">{{ 'package.index.filters.clear'|trans }}</a>
-            {% endif %}
-        </form>
-
         <section class="projects">
             {% if rows is empty %}
-                <p class="empty-state">{{ (isFiltered ? 'project.index.filters.no_results' : 'project.index.empty_state')|trans }}</p>
+                <p class="empty-state">{{ 'project.index.empty_state'|trans }}</p>
             {% else %}
-                <table class="projects-table">
-                    <thead>
-                        <tr>
-                            <th>{{ 'project.index.table.project'|trans }}</th>
-                            <th>{{ 'project.index.table.dependency_managers'|trans }}</th>
-                            <th>{{ 'project.index.table.manifests'|trans }}</th>
-                            <th>{{ 'project.index.table.vulnerabilities'|trans }}</th>
-                            <th>{{ 'project.index.table.last_scan'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in rows %}
+                <div data-controller="list-filter">
+                    <div class="filter-bar">
+                        <input
+                            type="text"
+                            placeholder="{{ 'project.index.filters.search_placeholder'|trans }}"
+                            class="form-input"
+                            data-list-filter-target="filter"
+                            data-list-filter-field="name"
+                            data-action="input->list-filter#filter"
+                        >
+                        <select class="form-input" data-list-filter-target="filter" data-list-filter-field="dependencyManagers" data-action="change->list-filter#filter">
+                            <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
+                            {% for dependencyManager in dependencyManagers %}
+                                <option value="{{ dependencyManager.name|lower }}">{{ dependencyManager.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-input" data-list-filter-target="filter" data-list-filter-field="updateStatus" data-action="change->list-filter#filter">
+                            <option value="">{{ 'project.index.filters.all_update_statuses'|trans }}</option>
+                            {% for status in ['up_to_date', 'partially_up_to_date', 'outdated'] %}
+                                <option value="{{ status }}">{{ ('project_update_status.' ~ status)|trans }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="button button--secondary" data-action="list-filter#reset">{{ 'package.index.filters.clear'|trans }}</button>
+                    </div>
+
+                    <p class="empty-state" data-list-filter-target="empty" hidden>{{ 'project.index.filters.no_results'|trans }}</p>
+
+                    <table class="projects-table">
+                        <thead>
                             <tr>
-                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
-                                <td>
-                                    {% for name in row.dependencyManagers %}
-                                        <span class="badge badge--neutral">{{ name }}</span>
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endfor %}
-                                </td>
-                                <td>{{ row.manifestCount }}</td>
-                                <td>
-                                    {% if row.vulnerabilityCount > 0 %}
-                                        <span class="badge badge--{{ row.maxVulnerabilitySeverity|default('unknown')|lower }}">{{ row.vulnerabilityCount }} {{ row.maxVulnerabilitySeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span>
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if row.lastScan %}
-                                        <span class="badge badge--{{ row.lastScan.status.value }}">{{ row.lastScan.status|trans }}</span>
-                                        {% if row.lastScan.startedAt %}
-                                            <span class="text-muted">{{ row.lastScan.startedAt|date('d/m/Y H:i') }}</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">{{ 'project.index.never_scanned'|trans }}</span>
-                                    {% endif %}
-                                </td>
+                                <th>{{ 'project.index.table.project'|trans }}</th>
+                                <th>{{ 'project.index.table.dependency_managers'|trans }}</th>
+                                <th>{{ 'project.index.table.manifests'|trans }}</th>
+                                <th>{{ 'project.index.table.vulnerabilities'|trans }}</th>
+                                <th>{{ 'project.index.table.last_scan'|trans }}</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr
+                                    data-list-filter-target="row"
+                                    data-name="{{ row.project.name|lower }}"
+                                    data-dependency-managers="{{ row.dependencyManagers|map(name => name|lower)|join(' ') }}"
+                                    data-update-status="{{ row.updateStatus.value|default('') }}"
+                                >
+                                    <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
+                                    <td>
+                                        {% for name in row.dependencyManagers %}
+                                            <span class="badge badge--neutral">{{ name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ row.manifestCount }}</td>
+                                    <td>
+                                        {% if row.vulnerabilityCount > 0 %}
+                                            <span class="badge badge--{{ row.maxVulnerabilitySeverity|default('unknown')|lower }}">{{ row.vulnerabilityCount }} {{ row.maxVulnerabilitySeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if row.lastScan %}
+                                            <span class="badge badge--{{ row.lastScan.status.value }}">{{ row.lastScan.status|trans }}</span>
+                                            {% if row.lastScan.startedAt %}
+                                                <span class="text-muted">{{ row.lastScan.startedAt|date('d/m/Y H:i') }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">{{ 'project.index.never_scanned'|trans }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </section>
 

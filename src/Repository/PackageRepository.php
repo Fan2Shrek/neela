@@ -63,27 +63,6 @@ class PackageRepository extends ServiceEntityRepository
     }
 
     /**
-     * In-memory substring match against "vendor/name", same convention as
-     * ProjectRepository::findNamesMatching().
-     *
-     * @return string[]
-     */
-    public function findFullNamesMatching(string $search, int $limit = 20): array
-    {
-        $names = array_map(
-            static fn (Package $package): string => $package->getVendor()->getName().'/'.$package->getName(),
-            $this->findAllWithVendor(),
-        );
-
-        $matching = array_values(array_filter(
-            $names,
-            static fn (string $name): bool => false !== stripos($name, $search),
-        ));
-
-        return \array_slice($matching, 0, $limit);
-    }
-
-    /**
      * Lazily streams package ids from the database instead of hydrating every
      * Package entity into memory at once (as findAll() would).
      *

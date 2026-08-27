@@ -57,12 +57,8 @@ final class ProjectController extends AbstractController
     }
 
     #[Route('/projects', name: 'app_project_index', methods: ['GET'])]
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        $search = trim((string) $request->query->get('search', ''));
-        $dependencyManagerName = trim((string) $request->query->get('dependency_manager', ''));
-        $updateStatusFilter = trim((string) $request->query->get('update_status', ''));
-
         $projects = $this->projectRepository->findAll();
         $vulnerabilityExposure = $this->vulnerabilityRepository->severityBreakdownByProject();
         $updateStatuses = $this->projectUpdateStatusCalculator->calculate();
@@ -89,53 +85,16 @@ final class ProjectController extends AbstractController
             ];
         }, $projects);
 
-        if ('' !== $search) {
-            $rows = array_values(array_filter(
-                $rows,
-                static fn (array $row): bool => false !== stripos($row['project']->getName(), $search),
-            ));
-        }
-
-        if ('' !== $dependencyManagerName) {
-            $rows = array_values(array_filter(
-                $rows,
-                static fn (array $row): bool => \in_array($dependencyManagerName, $row['dependencyManagers'], true),
-            ));
-        }
-
-        if ('' !== $updateStatusFilter) {
-            $rows = array_values(array_filter(
-                $rows,
-                static fn (array $row): bool => $row['updateStatus']?->value === $updateStatusFilter,
-            ));
-        }
-
         // Most critical exposure first; projects with no known vulnerability keep their
         // original order (findAll() is name-ordered) since maxSeverityRank stays -1 for all of them.
+        // Filtering itself happens client-side (see list_filter_controller.js) so it's instant;
+        // the rows below are simply annotated with data-* attributes for it to match against.
         usort($rows, static fn (array $a, array $b): int => $b['maxVulnerabilitySeverityRank'] <=> $a['maxVulnerabilitySeverityRank']);
-
-        $isFiltered = '' !== $search || '' !== $dependencyManagerName || '' !== $updateStatusFilter;
 
         return $this->render('project/index.html.twig', [
             'rows' => $rows,
             'projectCount' => \count($projects),
-            'search' => $search,
-            'dependencyManagerName' => $dependencyManagerName,
-            'updateStatusFilter' => $updateStatusFilter,
             'dependencyManagers' => $this->dependencyManagerRepository->findAll(),
-            'isFiltered' => $isFiltered,
-        ]);
-    }
-
-    #[Route('/projects/autocomplete', name: 'app_project_autocomplete', methods: ['GET'])]
-    public function autocomplete(Request $request): Response
-    {
-        $query = trim((string) $request->query->get('query', ''));
-
-        $names = $query === '' ? [] : $this->projectRepository->findNamesMatching($query);
-
-        return $this->json([
-            'results' => array_map(static fn (string $name): array => ['value' => $name, 'text' => $name], $names),
         ]);
     }
 

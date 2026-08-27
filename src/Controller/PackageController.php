@@ -12,7 +12,6 @@ use App\Repository\PackageRepository;
 use App\Repository\VersionRepository;
 use App\Service\Package\PackageUpdateChecker;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -29,11 +28,8 @@ final class PackageController extends AbstractController
     }
 
     #[Route('/packages', name: 'app_package_index', methods: ['GET'])]
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        $search = trim((string) $request->query->get('search', ''));
-        $dependencyManagerName = trim((string) $request->query->get('dependency_manager', ''));
-
         $packages = $this->packageRepository->findAllWithVendor();
         $usage = $this->dependencyRepository->countUsageByPackage();
 
@@ -43,6 +39,8 @@ final class PackageController extends AbstractController
             'dependencyCount' => $usage[$package->getId()]['dependencyCount'] ?? 0,
         ], $packages);
 
+        // Grouped by ecosystem, most-used package first within each; filtering itself is
+        // client-side (see list_filter_controller.js), rows just carry data-* to match on.
         usort($rows, static function (array $a, array $b): int {
             $managerComparison = $a['package']->getVendor()->getDependencyManager()->getName()
                 <=> $b['package']->getVendor()->getDependencyManager()->getName();
@@ -50,42 +48,10 @@ final class PackageController extends AbstractController
             return 0 !== $managerComparison ? $managerComparison : $b['dependencyCount'] <=> $a['dependencyCount'];
         });
 
-        if ('' !== $search) {
-            $rows = array_values(array_filter(
-                $rows,
-                static fn (array $row): bool => false !== stripos(
-                    $row['package']->getVendor()->getName().'/'.$row['package']->getName(),
-                    $search,
-                ),
-            ));
-        }
-
-        if ('' !== $dependencyManagerName) {
-            $rows = array_values(array_filter(
-                $rows,
-                static fn (array $row): bool => $row['package']->getVendor()->getDependencyManager()->getName() === $dependencyManagerName,
-            ));
-        }
-
         return $this->render('package/index.html.twig', [
             'rows' => $rows,
             'packageCount' => \count($packages),
-            'search' => $search,
-            'dependencyManagerName' => $dependencyManagerName,
             'dependencyManagers' => $this->dependencyManagerRepository->findAll(),
-            'isFiltered' => '' !== $search || '' !== $dependencyManagerName,
-        ]);
-    }
-
-    #[Route('/packages/autocomplete', name: 'app_package_autocomplete', methods: ['GET'])]
-    public function autocomplete(Request $request): Response
-    {
-        $query = trim((string) $request->query->get('query', ''));
-
-        $names = '' === $query ? [] : $this->packageRepository->findFullNamesMatching($query);
-
-        return $this->json([
-            'results' => array_map(static fn (string $name): array => ['value' => $name, 'text' => $name], $names),
         ]);
     }
 

@@ -11,54 +11,56 @@
             </div>
         </header>
 
-        <form method="get" class="filter-bar">
-            <input
-                type="text"
-                name="search"
-                value="{{ search }}"
-                placeholder="{{ 'package.index.filters.search_placeholder'|trans }}"
-                class="form-input"
-                data-controller="symfony--ux-autocomplete--autocomplete"
-                data-symfony--ux-autocomplete--autocomplete-url-value="{{ path('app_package_autocomplete') }}"
-                data-symfony--ux-autocomplete--autocomplete-min-characters-value="1"
-                data-symfony--ux-autocomplete--autocomplete-no-results-found-text-value="{{ 'package.index.filters.no_results'|trans }}"
-            >
-            <select name="dependency_manager" class="form-input">
-                <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
-                {% for dependencyManager in dependencyManagers %}
-                    <option value="{{ dependencyManager.name }}" {{ dependencyManager.name == dependencyManagerName ? 'selected' : '' }}>{{ dependencyManager.name }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="button button--primary">{{ 'package.index.filters.apply'|trans }}</button>
-            {% if isFiltered %}
-                <a href="{{ path('app_package_index') }}" class="button button--secondary">{{ 'package.index.filters.clear'|trans }}</a>
-            {% endif %}
-        </form>
-
         <section class="projects">
             {% if rows is empty %}
-                <p class="empty-state">{{ (isFiltered ? 'package.index.filters.no_results' : 'package.index.empty_state')|trans }}</p>
+                <p class="empty-state">{{ 'package.index.empty_state'|trans }}</p>
             {% else %}
-                <table class="projects-table">
-                    <thead>
-                        <tr>
-                            <th>{{ 'package.index.table.package'|trans }}</th>
-                            <th>{{ 'package.index.table.dependency_manager'|trans }}</th>
-                            <th>{{ 'package.index.table.projects'|trans }}</th>
-                            <th>{{ 'package.index.table.dependencies'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in rows %}
+                <div data-controller="list-filter">
+                    <div class="filter-bar">
+                        <input
+                            type="text"
+                            placeholder="{{ 'package.index.filters.search_placeholder'|trans }}"
+                            class="form-input"
+                            data-list-filter-target="filter"
+                            data-list-filter-field="name"
+                            data-action="input->list-filter#filter"
+                        >
+                        <select class="form-input" data-list-filter-target="filter" data-list-filter-field="dependencyManager" data-action="change->list-filter#filter">
+                            <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
+                            {% for dependencyManager in dependencyManagers %}
+                                <option value="{{ dependencyManager.name|lower }}">{{ dependencyManager.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="button button--secondary" data-action="list-filter#reset">{{ 'package.index.filters.clear'|trans }}</button>
+                    </div>
+
+                    <p class="empty-state" data-list-filter-target="empty" hidden>{{ 'package.index.filters.no_results'|trans }}</p>
+
+                    <table class="projects-table">
+                        <thead>
                             <tr>
-                                <td class="projects-table__name"><a href="{{ path('app_package_show', {id: row.package.id}) }}">{{ row.package.vendor.name }}/{{ row.package.name }}</a></td>
-                                <td><span class="badge badge--neutral">{{ row.package.vendor.dependencyManager.name }}</span></td>
-                                <td>{{ row.projectCount }}</td>
-                                <td>{{ row.dependencyCount }}</td>
+                                <th>{{ 'package.index.table.package'|trans }}</th>
+                                <th>{{ 'package.index.table.dependency_manager'|trans }}</th>
+                                <th>{{ 'package.index.table.projects'|trans }}</th>
+                                <th>{{ 'package.index.table.dependencies'|trans }}</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr
+                                    data-list-filter-target="row"
+                                    data-name="{{ (row.package.vendor.name ~ '/' ~ row.package.name)|lower }}"
+                                    data-dependency-manager="{{ row.package.vendor.dependencyManager.name|lower }}"
+                                >
+                                    <td class="projects-table__name"><a href="{{ path('app_package_show', {id: row.package.id}) }}">{{ row.package.vendor.name }}/{{ row.package.name }}</a></td>
+                                    <td><span class="badge badge--neutral">{{ row.package.vendor.dependencyManager.name }}</span></td>
+                                    <td>{{ row.projectCount }}</td>
+                                    <td>{{ row.dependencyCount }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </section>
     </div>
