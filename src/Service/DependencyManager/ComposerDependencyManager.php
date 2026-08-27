@@ -26,8 +26,59 @@ final class ComposerDependencyManager implements DependencyManagerInterface
         return \in_array(basename($projectPath), $this->getManifestFilenames(), true);
     }
 
-    public function getDependencies(string $projectPath): array
+    public function getDependencies(string $manifestContent, ?string $lockContent): array
     {
-        throw new \LogicException('Not implemented yet.');
+        $manifest = json_decode($manifestContent, true, flags: \JSON_THROW_ON_ERROR);
+        $lockedVersions = $this->extractLockedVersions($lockContent);
+
+        $sections = [
+            'require' => 'require',
+            'require-dev' => 'require-dev',
+        ];
+
+        $dependencies = [];
+        foreach ($sections as $section => $type) {
+            foreach ($manifest[$section] ?? [] as $name => $constraint) {
+                if (!str_contains($name, '/')) {
+                    // Platform requirement (php, ext-*, lib-*, ...), not a real Packagist package.
+                    continue;
+                }
+
+                [$vendor, $packageName] = explode('/', $name, 2);
+
+                $dependencies[] = new DiscoveredDependency(
+                    vendor: $vendor,
+                    name: $packageName,
+                    constraint: $constraint,
+                    lockedVersion: $lockedVersions[$name] ?? null,
+                    type: $type,
+                );
+            }
+        }
+
+        return $dependencies;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function extractLockedVersions(?string $lockContent): array
+    {
+        if (null === $lockContent) {
+            return [];
+        }
+
+        $lock = json_decode($lockContent, true, flags: \JSON_THROW_ON_ERROR);
+
+        $versions = [];
+        foreach (['packages', 'packages-dev'] as $section) {
+            foreach ($lock[$section] ?? [] as $package) {
+                if (isset($package['name'], $package['version'])) {
+                    $versions[$package['name']] = $package['version'];
+                }
+            }
+        }
+
+        return $versions;
     }
 }

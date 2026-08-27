@@ -116,6 +116,11 @@ final class ManifestDiscoveryServiceTest extends TestCase
             {
                 return $this->tree;
             }
+
+            public function getFileContent(string $sshLink, string $path): ?string
+            {
+                throw new \LogicException('Not needed for this test.');
+            }
         };
     }
 }

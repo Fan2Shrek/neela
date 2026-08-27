@@ -14,4 +14,6 @@ interface VCSInterface
     public function getVCSInfo(string $projectPath): VCSProject;
 
     public function getTree(string $sshLink): GitTree;
+
+    public function getFileContent(string $sshLink, string $path): ?string;
 }

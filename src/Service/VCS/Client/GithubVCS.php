@@ -73,6 +73,37 @@ final class GithubVCS implements VCSInterface
         return new GitTree($entries, (bool) ($data['truncated'] ?? false));
     }
 
+    public function getFileContent(string $sshLink, string $path): ?string
+    {
+        [$owner, $repo] = $this->parseOwnerAndRepo($sshLink);
+
+        $defaultBranch = $this->getDefaultBranch($owner, $repo);
+
+        $encodedPath = implode('/', array_map(rawurlencode(...), explode('/', ltrim($path, '/'))));
+
+        $response = $this->request('GET', \sprintf('/repos/%s/%s/contents/%s', $owner, $repo, $encodedPath), [
+            'query' => ['ref' => $defaultBranch],
+        ]);
+
+        if (404 === $response->getStatusCode()) {
+            return null;
+        }
+
+        $data = $this->decode($response, $owner, $repo);
+
+        if ('base64' !== ($data['encoding'] ?? null) || !isset($data['content'])) {
+            throw new GitHubApiException(\sprintf('Unexpected content encoding for "%s/%s/%s".', $owner, $repo, $path));
+        }
+
+        $decoded = base64_decode(str_replace("\n", '', $data['content']), true);
+
+        if (false === $decoded) {
+            throw new GitHubApiException(\sprintf('Unable to decode the content of "%s/%s/%s".', $owner, $repo, $path));
+        }
+
+        return $decoded;
+    }
+
     private function getDefaultBranch(string $owner, string $repo): string
     {
         $response = $this->request('GET', \sprintf('/repos/%s/%s', $owner, $repo));

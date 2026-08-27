@@ -21,7 +21,7 @@ class Dependency
     #[ORM\JoinColumn(nullable: false)]
     private Package $package;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(name: 'version_constraint', length: 255)]
     private string $constraint;
 
     #[ORM\Column(length: 255)]

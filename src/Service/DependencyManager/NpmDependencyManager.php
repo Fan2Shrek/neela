@@ -26,8 +26,67 @@ final class NpmDependencyManager implements DependencyManagerInterface
         return \in_array(basename($projectPath), $this->getManifestFilenames(), true);
     }
 
-    public function getDependencies(string $projectPath): array
+    public function getDependencies(string $manifestContent, ?string $lockContent): array
     {
-        throw new \LogicException('Not implemented yet.');
+        $manifest = json_decode($manifestContent, true, flags: \JSON_THROW_ON_ERROR);
+        $lockedVersions = $this->extractLockedVersions($lockContent);
+
+        $sections = [
+            'dependencies' => 'require',
+            'devDependencies' => 'require-dev',
+        ];
+
+        $dependencies = [];
+        foreach ($sections as $section => $type) {
+            foreach ($manifest[$section] ?? [] as $name => $constraint) {
+                // Scoped packages (e.g. "@babel/core") already contain a "/"; unscoped
+                // packages (e.g. "lodash") have no vendor, so they act as their own.
+                [$vendor, $packageName] = str_contains($name, '/') ? explode('/', $name, 2) : [$name, $name];
+
+                $dependencies[] = new DiscoveredDependency(
+                    vendor: $vendor,
+                    name: $packageName,
+                    constraint: $constraint,
+                    lockedVersion: $lockedVersions[$name] ?? null,
+                    type: $type,
+                );
+            }
+        }
+
+        return $dependencies;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function extractLockedVersions(?string $lockContent): array
+    {
+        if (null === $lockContent) {
+            return [];
+        }
+
+        $lock = json_decode($lockContent, true, flags: \JSON_THROW_ON_ERROR);
+
+        $versions = [];
+        foreach ($lock['packages'] ?? [] as $path => $package) {
+            if ('' === $path || !isset($package['version'])) {
+                // Skip the root package entry (empty path key).
+                continue;
+            }
+
+            $name = preg_replace('#^.*node_modules/#', '', (string) $path);
+            $versions[$name] = $package['version'];
+        }
+
+        if ([] === $versions) {
+            // Legacy lockfile v1 format.
+            foreach ($lock['dependencies'] ?? [] as $name => $package) {
+                if (isset($package['version'])) {
+                    $versions[$name] = $package['version'];
+                }
+            }
+        }
+
+        return $versions;
     }
 }

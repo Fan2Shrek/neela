@@ -103,6 +103,11 @@ final class ImportProjectHandlerTest extends TestCase
             {
                 return new GitTree([], false);
             }
+
+            public function getFileContent(string $sshLink, string $path): ?string
+            {
+                return null;
+            }
         };
     }
 }

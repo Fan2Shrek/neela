@@ -23,5 +23,8 @@ interface DependencyManagerInterface
 
     public function supports(string $projectPath): bool;
 
-    public function getDependencies(string $projectPath): array;
+    /**
+     * @return DiscoveredDependency[]
+     */
+    public function getDependencies(string $manifestContent, ?string $lockContent): array;
 }

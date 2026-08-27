@@ -4,26 +4,121 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Dependency;
 use App\Entity\Manifest;
+use App\Entity\Package;
+use App\Entity\Vendor;
+use App\Repository\DependencyRepository;
+use App\Repository\PackageRepository;
+use App\Repository\VendorRepository;
+use App\Service\DependencyManager\DependencyManagerInterface;
 use App\Service\VCS\VCSResolver;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
-final class ManifestScanner
+final class ManifestScanner implements ManifestScannerInterface
 {
+    /**
+     * @param iterable<DependencyManagerInterface> $dependencyManagers
+     */
     public function __construct(
-        private VCSResolver $vcsResolver,
+        private readonly VCSResolver $vcsResolver,
+        #[AutowireIterator(DependencyManagerInterface::class)]
+        private readonly iterable $dependencyManagers,
+        private readonly VendorRepository $vendorRepository,
+        private readonly PackageRepository $packageRepository,
+        private readonly DependencyRepository $dependencyRepository,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
     public function scan(Manifest $manifest): void
     {
+        if (null === $manifest->getLockPath()) {
+            // Nothing to compare an installed version against without a lockfile.
+            return;
+        }
+
         $project = $manifest->getProject();
+        $vcs = $this->vcsResolver->resolve($project->getSshLink());
 
-        $vcsClient = $this->vcsResolver->resolve($project->getSshLink());
+        $manifestContent = $vcs->getFileContent($project->getSshLink(), $manifest->getPath());
+        $lockContent = $vcs->getFileContent($project->getSshLink(), $manifest->getLockPath());
 
-        $vcsInfo = $vcsClient->getVCSInfo($project->getSshLink());
+        if (null === $manifestContent || null === $lockContent) {
+            // The manifest or lockfile disappeared from the repository since it was discovered.
+            return;
+        }
 
-        // parse manifest + lockfile via $manifest->getDependencyManager()
+        $definition = $this->resolveDependencyManagerDefinition($manifest);
 
-        // get dependencies
+        /** @var array<string, Vendor> $vendorCache */
+        $vendorCache = [];
+        /** @var array<string, Package> $packageCache */
+        $packageCache = [];
+
+        foreach ($definition->getDependencies($manifestContent, $lockContent) as $discovered) {
+            if (null === $discovered->lockedVersion) {
+                continue;
+            }
+
+            $vendor = $vendorCache[$discovered->vendor] ??= $this->resolveVendor($manifest, $discovered->vendor);
+            $packageKey = $discovered->vendor.'/'.$discovered->name;
+            $package = $packageCache[$packageKey] ??= $this->resolvePackage($vendor, $discovered->name);
+
+            $dependency = $this->dependencyRepository->findOneBy(['manifest' => $manifest, 'package' => $package]);
+
+            if (null === $dependency) {
+                $dependency = new Dependency($manifest, $package, $discovered->constraint, $discovered->lockedVersion, $discovered->type);
+                $this->entityManager->persist($dependency);
+            } else {
+                $dependency->setConstraint($discovered->constraint);
+                $dependency->setLockedVersion($discovered->lockedVersion);
+                $dependency->setDependencyType($discovered->type);
+            }
+        }
+
+        $this->entityManager->flush();
+    }
+
+    private function resolveDependencyManagerDefinition(Manifest $manifest): DependencyManagerInterface
+    {
+        $name = $manifest->getDependencyManager()->getName();
+
+        foreach ($this->dependencyManagers as $dependencyManager) {
+            if ($dependencyManager->getName() === $name) {
+                return $dependencyManager;
+            }
+        }
+
+        throw new \RuntimeException(\sprintf('No dependency manager definition found for "%s".', $name));
+    }
+
+    private function resolveVendor(Manifest $manifest, string $name): Vendor
+    {
+        $vendor = $this->vendorRepository->findOneBy(['dependencyManager' => $manifest->getDependencyManager(), 'name' => $name]);
+
+        if (null === $vendor) {
+            $vendor = new Vendor($name, $manifest->getDependencyManager());
+            $this->entityManager->persist($vendor);
+            // Flush now: the vendor's id is needed right away to look up its packages.
+            $this->entityManager->flush();
+        }
+
+        return $vendor;
+    }
+
+    private function resolvePackage(Vendor $vendor, string $name): Package
+    {
+        $package = $this->packageRepository->findOneBy(['vendor' => $vendor, 'name' => $name]);
+
+        if (null === $package) {
+            $package = new Package($name, $vendor);
+            $this->entityManager->persist($package);
+            // Flush now: the package's id is needed right away to look up its dependency rows.
+            $this->entityManager->flush();
+        }
+
+        return $package;
     }
 }

@@ -136,7 +136,7 @@ final class ManifestMatcherTest extends TestCase
                 return \in_array(basename($projectPath), $this->getManifestFilenames(), true);
             }
 
-            public function getDependencies(string $projectPath): array
+            public function getDependencies(string $manifestContent, ?string $lockContent): array
             {
                 return [];
             }

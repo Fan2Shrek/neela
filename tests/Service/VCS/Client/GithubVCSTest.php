@@ -153,4 +153,50 @@ final class GithubVCSTest extends TestCase
 
         (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/missing.git');
     }
+
+    public function testGetFileContentDecodesBase64Content(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode(['default_branch' => 'main'])),
+            new MockResponse(json_encode([
+                'encoding' => 'base64',
+                'content' => base64_encode('{"require":{"symfony/console":"^6.4"}}'),
+            ])),
+        ]);
+
+        $content = (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.json');
+
+        self::assertSame('{"require":{"symfony/console":"^6.4"}}', $content);
+    }
+
+    public function testGetFileContentRequestsTheEncodedPathAtTheDefaultBranch(): void
+    {
+        $requestedUrl = null;
+        $httpClient = new MockHttpClient(function (string $method, string $url) use (&$requestedUrl) {
+            if (str_contains($url, '/contents/')) {
+                $requestedUrl = $url;
+
+                return new MockResponse(json_encode(['encoding' => 'base64', 'content' => base64_encode('{}')]));
+            }
+
+            return new MockResponse(json_encode(['default_branch' => 'main']));
+        });
+
+        (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'app/back/composer.json');
+
+        self::assertStringContainsString('/repos/acme/my-project/contents/app/back/composer.json', $requestedUrl);
+        self::assertStringContainsString('ref=main', $requestedUrl);
+    }
+
+    public function testGetFileContentReturnsNullWhenFileIsMissing(): void
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode(['default_branch' => 'main'])),
+            new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]),
+        ]);
+
+        $content = (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.lock');
+
+        self::assertNull($content);
+    }
 }
