@@ -19,6 +19,11 @@
         {% endif %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <div class="app">
+            <twig:Sidebar />
+            <main class="app__content">
+                {% block body %}{% endblock %}
+            </main>
+        </div>
     </body>
 </html>

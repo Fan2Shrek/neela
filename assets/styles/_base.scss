@@ -1,0 +1,15 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background-color: var(--neela-bg);
+    color: var(--neela-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.text-muted {
+    color: var(--neela-text-muted);
+    font-size: 0.875rem;
+}

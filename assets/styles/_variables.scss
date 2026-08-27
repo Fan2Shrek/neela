@@ -1,0 +1,31 @@
+// Design tokens, exposed as CSS custom properties so every partial can read
+// them at runtime (dark mode swaps values without any Sass recompilation).
+:root {
+    color-scheme: light dark;
+    --neela-bg: #f5f6f8;
+    --neela-surface: #ffffff;
+    --neela-border: #e2e4e9;
+    --neela-text: #1c1f26;
+    --neela-text-muted: #6b7280;
+    --neela-success: #1a7f37;
+    --neela-success-bg: #e6f6ea;
+    --neela-warning: #9a5b00;
+    --neela-warning-bg: #fff3dc;
+    --neela-danger: #b42318;
+    --neela-danger-bg: #fdecea;
+    --neela-neutral-bg: #eef0f3;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --neela-bg: #14161a;
+        --neela-surface: #1c1f26;
+        --neela-border: #2c303a;
+        --neela-text: #e7e9ee;
+        --neela-text-muted: #9aa0ac;
+        --neela-success-bg: #16321f;
+        --neela-warning-bg: #3a2a09;
+        --neela-danger-bg: #3a1a17;
+        --neela-neutral-bg: #262a33;
+    }
+}

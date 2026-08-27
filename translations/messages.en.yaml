@@ -1,19 +1,18 @@
 common:
     close: 'Close'
+    language: 'Language'
+
+nav:
+    dashboard: 'Dashboard'
+    projects: 'Projects'
+    packages: 'Packages'
 
 dashboard:
-    add_project: 'Add a project'
+    title: 'Dashboard'
     projects_tracked: '{0} No projects tracked|{1} One project tracked|]1,Inf[ %count% projects tracked'
     scans_up_to_date: 'up-to-date scans'
     scans_pending: 'pending scans'
     scans_failed: 'failed scans'
-    empty_state: 'No projects tracked yet.'
-    never_scanned: 'Never scanned'
-    table:
-        project: 'Project'
-        dependency_managers: 'Dependency managers'
-        manifests: 'Manifests'
-        last_scan: 'Last scan'
 
 scan_status:
     pending: 'Pending'
@@ -28,5 +27,27 @@ project:
         ssh_link_hint: 'The SSH clone URL of the repository, e.g. git@github.com:owner/repo.git'
         scan_now: 'Scan now'
         submit: 'Add'
+    index:
+        title: 'Projects'
+        subtitle: '{0} No projects tracked yet|{1} One project tracked|]1,Inf[ %count% projects tracked'
+        add_project: 'Add a project'
+        empty_state: 'No projects tracked yet.'
+        never_scanned: 'Never scanned'
+        table:
+            project: 'Project'
+            dependency_managers: 'Dependency managers'
+            manifests: 'Manifests'
+            last_scan: 'Last scan'
 
 project.import.queued: 'The project has been queued for import.'
+
+package:
+    index:
+        title: 'Packages'
+        subtitle: '{0} No packages discovered yet|{1} One package discovered|]1,Inf[ %count% packages discovered'
+        empty_state: 'No packages discovered yet.'
+        table:
+            package: 'Package'
+            dependency_manager: 'Dependency manager'
+            projects: 'Projects'
+            dependencies: 'Dependencies'

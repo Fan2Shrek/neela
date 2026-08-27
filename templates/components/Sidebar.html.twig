@@ -1,0 +1,19 @@
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <span class="sidebar__logo">Neela</span>
+        <span class="sidebar__tagline">Dependency Monitor</span>
+    </div>
+    <nav class="sidebar__nav">
+        {% for item in this.navItems %}
+            <a class="sidebar__link{{ this.isActive(item) ? ' sidebar__link--active' : '' }}" href="{{ path(item.route) }}">
+                {{ ux_icon(item.icon, {class: 'sidebar__icon'}) }}
+                <span>{{ item.label|trans }}</span>
+            </a>
+        {% endfor %}
+    </nav>
+    <div class="sidebar__locales" role="group" aria-label="{{ 'common.language'|trans }}">
+        {% for locale in this.locales %}
+            <a class="sidebar__locale{{ this.currentLocale == locale ? ' sidebar__locale--active' : '' }}" href="{{ path('app_locale_switch', {locale: locale, redirect: app.request.requestUri}) }}">{{ locale|upper }}</a>
+        {% endfor %}
+    </div>
+</aside>

@@ -1,19 +1,18 @@
 common:
     close: 'Fermer'
+    language: 'Langue'
+
+nav:
+    dashboard: 'Dashboard'
+    projects: 'Projets'
+    packages: 'Paquets'
 
 dashboard:
-    add_project: 'Ajouter un projet'
+    title: 'Dashboard'
     projects_tracked: '{0} Aucun projet suivi|{1} Un projet suivi|]1,Inf[ %count% projets suivis'
     scans_up_to_date: 'scans à jour'
     scans_pending: 'scans en attente'
     scans_failed: 'scans en erreur'
-    empty_state: 'Aucun projet suivi pour le moment.'
-    never_scanned: 'Jamais scanné'
-    table:
-        project: 'Projet'
-        dependency_managers: 'Gestionnaires'
-        manifests: 'Manifests'
-        last_scan: 'Dernier scan'
 
 scan_status:
     pending: 'En attente'
@@ -28,5 +27,27 @@ project:
         ssh_link_hint: 'L''URL de clonage SSH du dépôt, ex. git@github.com:owner/repo.git'
         scan_now: 'Scanner maintenant'
         submit: 'Ajouter'
+    index:
+        title: 'Projets'
+        subtitle: '{0} Aucun projet suivi|{1} Un projet suivi|]1,Inf[ %count% projets suivis'
+        add_project: 'Ajouter un projet'
+        empty_state: 'Aucun projet suivi pour le moment.'
+        never_scanned: 'Jamais scanné'
+        table:
+            project: 'Projet'
+            dependency_managers: 'Gestionnaires'
+            manifests: 'Manifests'
+            last_scan: 'Dernier scan'
 
 project.import.queued: 'Le projet a été mis en file d''attente pour import.'
+
+package:
+    index:
+        title: 'Paquets'
+        subtitle: '{0} Aucun paquet découvert|{1} Un paquet découvert|]1,Inf[ %count% paquets découverts'
+        empty_state: 'Aucun paquet découvert pour le moment.'
+        table:
+            package: 'Paquet'
+            dependency_manager: 'Gestionnaire'
+            projects: 'Projets'
+            dependencies: 'Dépendances'

@@ -1,0 +1,31 @@
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--neela-surface);
+    border: 1px solid var(--neela-border);
+    border-radius: 8px;
+
+    &__value {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    &__label {
+        color: var(--neela-text-muted);
+        font-size: 0.875rem;
+    }
+
+    &--success .stat-tile__value {
+        color: var(--neela-success);
+    }
+
+    &--warning .stat-tile__value {
+        color: var(--neela-warning);
+    }
+
+    &--danger .stat-tile__value {
+        color: var(--neela-danger);
+    }
+}

@@ -18,6 +18,8 @@ Le projet commence avec **PHP / Composer**, mais est conçu pour pouvoir
 gérer d'autres gestionnaires de dépendances comme **npm, PyPI, Cargo,
 etc.**
 
+Le projet vise à être open source et self hostable via docker
+
 ------------------------------------------------------------------------
 
 ## Objectifs

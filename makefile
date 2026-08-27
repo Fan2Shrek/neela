@@ -11,7 +11,7 @@ SYMFONY  = $(PHP) bin/console
 
 # Misc
 .DEFAULT_GOAL = help
-.PHONY        : help build up start down logs sh composer vendor sf cc test db
+.PHONY        : help build up start down logs sh composer vendor sf cc test db sass
 
 ## —— 🎵 🐳 The Symfony Docker Makefile 🐳 🎵 ——————————————————————————————————
 help: ## Outputs this help screen
@@ -66,3 +66,6 @@ db: ## Reset the database (terminate other sessions, drop, create, run migration
 	@$(SYMFONY) doctrine:database:create --if-not-exists
 	@$(SYMFONY) doctrine:migrations:migrate --no-interaction --allow-no-migration
 	@$(SYMFONY) doctrine:schema:update -n -f
+
+sass: ## Compile the Sass assets
+	@$(SYMFONY) sass:build

@@ -15,4 +15,18 @@ class PackageRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Package::class);
     }
+
+    /**
+     * @return Package[]
+     */
+    public function findAllWithVendor(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->addSelect('v')
+            ->join('p.vendor', 'v')
+            ->orderBy('v.name', 'ASC')
+            ->addOrderBy('p.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

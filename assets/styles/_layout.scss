@@ -1,0 +1,39 @@
+.app {
+    display: flex;
+    min-height: 100vh;
+
+    @media (max-width: 720px) {
+        flex-direction: column;
+    }
+}
+
+.app__content {
+    flex: 1;
+    min-width: 0;
+}
+
+// Generic content shell reused by every page (dashboard, projects, packages).
+// Not to be confused with the dashboard-only stat tiles in pages/_dashboard.scss.
+.dashboard {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+
+    &__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+
+        h1 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+    }
+
+    &__subtitle {
+        margin: 0.25rem 0 0;
+        color: var(--neela-text-muted);
+    }
+}

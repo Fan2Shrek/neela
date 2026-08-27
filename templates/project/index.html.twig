@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'project.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard" data-controller="modal">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'project.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'project.index.subtitle'|trans({}, null, null, projectCount) }}</p>
+            </div>
+            <a class="button button--primary" href="{{ path('app_project_new') }}" data-action="modal#open">+ {{ 'project.index.add_project'|trans }}</a>
+        </header>
+
+        <section class="projects">
+            {% if rows is empty %}
+                <p class="empty-state">{{ 'project.index.empty_state'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'project.index.table.project'|trans }}</th>
+                            <th>{{ 'project.index.table.dependency_managers'|trans }}</th>
+                            <th>{{ 'project.index.table.manifests'|trans }}</th>
+                            <th>{{ 'project.index.table.last_scan'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.project.name }}</td>
+                                <td>
+                                    {% for name in row.dependencyManagers %}
+                                        <span class="badge badge--neutral">{{ name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endfor %}
+                                </td>
+                                <td>{{ row.manifestCount }}</td>
+                                <td>
+                                    {% if row.lastScan %}
+                                        <span class="badge badge--{{ row.lastScan.status.value }}">{{ row.lastScan.status|trans }}</span>
+                                        {% if row.lastScan.startedAt %}
+                                            <span class="text-muted">{{ row.lastScan.startedAt|date('d/m/Y H:i') }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">{{ 'project.index.never_scanned'|trans }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <twig:Modal id="project-modal" />
+    </div>
+{% endblock %}

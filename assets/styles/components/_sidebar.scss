@@ -1,0 +1,114 @@
+.sidebar {
+    flex-shrink: 0;
+    width: 220px;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background-color: var(--neela-surface);
+    border-right: 1px solid var(--neela-border);
+
+    @media (max-width: 720px) {
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-right: none;
+        border-bottom: 1px solid var(--neela-border);
+    }
+
+    &__brand {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        padding: 0 0.5rem;
+    }
+
+    &__logo {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    &__tagline {
+        font-size: 0.75rem;
+        color: var(--neela-text-muted);
+    }
+
+    &__nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        @media (max-width: 720px) {
+            flex-direction: row;
+        }
+    }
+
+    &__link {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        border-left: 3px solid transparent;
+        color: var(--neela-text-muted);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        &:hover {
+            background-color: var(--neela-neutral-bg);
+            color: var(--neela-text);
+        }
+
+        &--active {
+            background-color: var(--neela-neutral-bg);
+            border-left-color: var(--neela-text);
+            color: var(--neela-text);
+            font-weight: 600;
+        }
+    }
+
+    // Rendered directly on the <svg> by ux_icon(), not a wrapping element.
+    &__icon {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+    }
+
+    &__locales {
+        display: flex;
+        gap: 0.375rem;
+        margin-top: auto;
+        padding: 0 0.5rem;
+
+        @media (max-width: 720px) {
+            margin-top: 0;
+            margin-left: auto;
+        }
+    }
+
+    &__locale {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--neela-border);
+        border-radius: 6px;
+        color: var(--neela-text-muted);
+        text-decoration: none;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        &:hover {
+            background-color: var(--neela-neutral-bg);
+            color: var(--neela-text);
+        }
+
+        &--active {
+            background-color: var(--neela-text);
+            border-color: var(--neela-text);
+            color: var(--neela-bg);
+        }
+    }
+}

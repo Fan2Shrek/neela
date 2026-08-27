@@ -1,0 +1,29 @@
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 0.25rem;
+
+    &--neutral {
+        background-color: var(--neela-neutral-bg);
+        color: var(--neela-text-muted);
+    }
+
+    &--completed {
+        background-color: var(--neela-success-bg);
+        color: var(--neela-success);
+    }
+
+    &--pending,
+    &--in_progress {
+        background-color: var(--neela-warning-bg);
+        color: var(--neela-warning);
+    }
+
+    &--failed {
+        background-color: var(--neela-danger-bg);
+        color: var(--neela-danger);
+    }
+}
