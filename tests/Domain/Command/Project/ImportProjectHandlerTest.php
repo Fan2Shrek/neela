@@ -7,10 +7,12 @@ namespace App\Tests\Domain\Command\Project;
 use App\Domain\Command\Manifest\ScanManifestDependenciesCommand;
 use App\Domain\Command\Project\ImportProjectCommand;
 use App\Domain\Command\Project\ImportProjectHandler;
+use App\Domain\Command\Project\RescanProjectCommand;
 use App\Entity\DependencyManager;
 use App\Entity\Manifest;
 use App\Entity\Project;
 use App\Entity\Scan;
+use App\Repository\ProjectRepository;
 use App\Service\ManifestDiscovery\ManifestDiscoveryInterface;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\VCSInterface;
@@ -20,6 +22,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Uid\Uuid;
 
 final class ImportProjectHandlerTest extends TestCase
 {
@@ -34,13 +37,43 @@ final class ImportProjectHandlerTest extends TestCase
             ->willReturn([]);
 
         $entityManager = $this->createStub(EntityManagerInterface::class);
+        $projectRepository = $this->createStub(ProjectRepository::class);
+        $projectRepository->method('findOneBySshLink')->willReturn(null);
 
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects(self::never())->method('dispatch');
 
-        $handler = new ImportProjectHandler($entityManager, $vcsResolver, $manifestDiscoveryService, $bus);
+        $handler = new ImportProjectHandler($entityManager, $projectRepository, $vcsResolver, $manifestDiscoveryService, $bus);
 
         $handler(new ImportProjectCommand('git@github.com:acme/my-project.git', scanNow: false));
+    }
+
+    public function testImportOfAnAlreadyKnownSshLinkDispatchesARescanInsteadOfDuplicating(): void
+    {
+        $vcsResolver = new VCSResolver([$this->stubVcs()]);
+
+        $existingProject = new Project('my-project', 'git@github.com:acme/my-project.git');
+        $property = new \ReflectionProperty(Project::class, 'id');
+        $property->setValue($existingProject, Uuid::v7());
+
+        $manifestDiscoveryService = $this->createMock(ManifestDiscoveryInterface::class);
+        $manifestDiscoveryService->expects(self::never())->method('discover');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::never())->method('persist');
+
+        $projectRepository = $this->createStub(ProjectRepository::class);
+        $projectRepository->method('findOneBySshLink')->willReturn($existingProject);
+
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::once())
+            ->method('dispatch')
+            ->with(self::isInstanceOf(RescanProjectCommand::class))
+            ->willReturnCallback(static fn (RescanProjectCommand $command): Envelope => new Envelope($command));
+
+        $handler = new ImportProjectHandler($entityManager, $projectRepository, $vcsResolver, $manifestDiscoveryService, $bus);
+
+        $handler(new ImportProjectCommand('git@github.com:acme/my-project.git', scanNow: true));
     }
 
     public function testImportCreatesOneScanPerDiscoveredManifestWhenScanNowIsTrue(): void
@@ -57,6 +90,9 @@ final class ImportProjectHandlerTest extends TestCase
 
         $manifestDiscoveryService = $this->createStub(ManifestDiscoveryInterface::class);
         $manifestDiscoveryService->method('discover')->willReturn($manifests);
+
+        $projectRepository = $this->createStub(ProjectRepository::class);
+        $projectRepository->method('findOneBySshLink')->willReturn(null);
 
         $nextScanId = 1;
         $entityManager = $this->createStub(EntityManagerInterface::class);
@@ -79,7 +115,7 @@ final class ImportProjectHandlerTest extends TestCase
                 return new Envelope($command);
             });
 
-        $handler = new ImportProjectHandler($entityManager, $vcsResolver, $manifestDiscoveryService, $bus);
+        $handler = new ImportProjectHandler($entityManager, $projectRepository, $vcsResolver, $manifestDiscoveryService, $bus);
 
         $handler(new ImportProjectCommand('git@github.com:acme/my-project.git', scanNow: true));
 

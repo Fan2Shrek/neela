@@ -20,7 +20,7 @@ class Project
     #[ORM\Column(length: 255)]
     private string $name;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private string $sshLink;
 
     public function __construct(string $name, string $gitLink)
