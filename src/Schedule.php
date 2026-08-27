@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Domain\Command\Project\ScheduledRescanCommand;
 use App\Domain\Command\Scan\DetectStalledScansCommand;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
@@ -24,6 +25,7 @@ class Schedule implements ScheduleProviderInterface
             ->processOnlyLastMissedRun(true) // ensure only last missed task is run
             ->with(
                 RecurringMessage::every('5 minutes', new DetectStalledScansCommand()),
+                RecurringMessage::every('1 day', new ScheduledRescanCommand()),
             )
         ;
     }
