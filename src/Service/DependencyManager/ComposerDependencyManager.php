@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Service\DependencyManager;
 
 use App\Service\PackageRegistry\PackageRegistryInterface;
+use App\Service\PackageRegistry\PackagistClient;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class ComposerDependencyManager implements DependencyManagerInterface
 {
     public function __construct(
+        #[Autowire(service: PackagistClient::class)]
         private readonly PackageRegistryInterface $registry,
     ) {
     }

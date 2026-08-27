@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\PackageRegistry;
 
+use App\Enum\Stability;
 use App\Service\PackageRegistry\Exception\PackageRegistryException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -51,6 +52,7 @@ final class PackagistClient implements PackageRegistryInterface
                 releasedAt: isset($release['time']) ? new \DateTimeImmutable($release['time']) : null,
                 // Packagist's "require.php" is Composer's flavor of a runtime constraint.
                 runtimeConstraint: $release['require']['php'] ?? null,
+                stability: Stability::fromVersionString($release['version']),
             );
         }
 

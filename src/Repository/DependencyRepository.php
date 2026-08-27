@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Dependency;
+use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<Dependency>
@@ -56,6 +58,36 @@ class DependencyRepository extends ServiceEntityRepository
         }
 
         return $counts;
+    }
+
+    /**
+     * @return Dependency[]
+     */
+    public function findByProjectWithPackage(Project $project): array
+    {
+        return $this->createQueryBuilder('d')
+            ->addSelect('m', 'pkg', 'v')
+            ->join('d.manifest', 'm')
+            ->join('d.package', 'pkg')
+            ->join('pkg.vendor', 'v')
+            ->andWhere('m.project = :project')
+            ->setParameter('project', $project)
+            ->orderBy('pkg.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return array<int, array{projectId: Uuid, packageId: int, lockedVersion: string, constraint: string}>
+     */
+    public function findLockedVersionsGroupedByProject(): array
+    {
+        return $this->createQueryBuilder('d')
+            ->select('p.id AS projectId', 'IDENTITY(d.package) AS packageId', 'd.lockedVersion', 'd.constraint')
+            ->join('d.manifest', 'm')
+            ->join('m.project', 'p')
+            ->getQuery()
+            ->getArrayResult();
     }
 
     /**

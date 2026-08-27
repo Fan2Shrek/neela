@@ -10,6 +10,8 @@
 @use 'components/projects-table';
 @use 'components/empty-state';
 @use 'components/form';
+@use 'components/content-section';
+@use 'components/filter-bar';
 
 @use 'pages/dashboard';
 @use 'pages/projects';

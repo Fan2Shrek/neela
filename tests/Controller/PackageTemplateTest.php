@@ -21,6 +21,10 @@ final class PackageTemplateTest extends KernelTestCase
         $html = $twig->render('package/index.html.twig', [
             'rows' => [],
             'packageCount' => 0,
+            'search' => '',
+            'dependencyManagerName' => '',
+            'dependencyManagers' => [],
+            'isFiltered' => false,
         ]);
 
         self::assertStringContainsString('Packages', $html);
@@ -47,10 +51,37 @@ final class PackageTemplateTest extends KernelTestCase
                 ],
             ],
             'packageCount' => 1,
+            'search' => '',
+            'dependencyManagerName' => '',
+            'dependencyManagers' => [$composer],
+            'isFiltered' => false,
         ]);
 
         self::assertStringContainsString('symfony/console', $html);
         self::assertStringContainsString('Composer', $html);
         self::assertStringContainsString('Un paquet découvert', $html);
+    }
+
+    public function testFilteredEmptyStateShowsANoResultsMessageWithAClearLink(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get('request_stack')->push(Request::create('/packages'));
+        $twig = self::getContainer()->get('twig');
+
+        $composer = new DependencyManager('Composer');
+
+        $html = $twig->render('package/index.html.twig', [
+            'rows' => [],
+            'packageCount' => 3,
+            'search' => 'nonexistent',
+            'dependencyManagerName' => 'Composer',
+            'dependencyManagers' => [$composer],
+            'isFiltered' => true,
+        ]);
+
+        self::assertStringContainsString('No packages match your filters.', $html);
+        self::assertStringNotContainsString('No packages discovered yet.', $html);
+        self::assertStringContainsString('value="nonexistent"', $html);
+        self::assertStringContainsString('selected', $html);
     }
 }

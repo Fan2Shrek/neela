@@ -11,6 +11,7 @@ use App\Entity\Scan;
 use App\Enum\ScanStatus;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Uid\Uuid;
 
 final class ProjectTemplateTest extends KernelTestCase
 {
@@ -37,6 +38,7 @@ final class ProjectTemplateTest extends KernelTestCase
         $twig = self::getContainer()->get('twig');
 
         $project = new Project('my-project', 'git@github.com:acme/my-project.git');
+        (new \ReflectionProperty(Project::class, 'id'))->setValue($project, Uuid::v7());
         $composer = new DependencyManager('Composer');
         $manifest = new Manifest($project, $composer, 'composer.json', 'composer.lock');
 

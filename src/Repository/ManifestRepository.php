@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Manifest;
+use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -27,6 +28,21 @@ class ManifestRepository extends ServiceEntityRepository
             ->join('m.dependencyManager', 'dm')
             ->orderBy('p.name', 'ASC')
             ->addOrderBy('m.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Manifest[]
+     */
+    public function findByProjectWithDependencyManager(Project $project): array
+    {
+        return $this->createQueryBuilder('m')
+            ->addSelect('dm')
+            ->join('m.dependencyManager', 'dm')
+            ->andWhere('m.project = :project')
+            ->setParameter('project', $project)
+            ->orderBy('m.path', 'ASC')
             ->getQuery()
             ->getResult();
     }

@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ project.name }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <a class="text-muted" href="{{ path('app_project_index') }}">&larr; {{ 'project.show.back_to_projects'|trans }}</a>
+                <h1>{{ project.name }}</h1>
+                <p class="dashboard__subtitle">{{ project.sshLink }}</p>
+            </div>
+        </header>
+
+        <section class="stat-tiles">
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ manifestCount }}</span>
+                <span class="stat-tile__label">{{ 'project.show.stats.manifests'|trans }}</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ dependencyCount }}</span>
+                <span class="stat-tile__label">{{ 'project.show.stats.dependencies'|trans }}</span>
+            </div>
+            <div class="stat-tile{% if lastScan %} stat-tile--{{ lastScan.status.value == 'completed' ? 'success' : (lastScan.status.value == 'failed' ? 'danger' : 'warning') }}{% endif %}">
+                <span class="stat-tile__value">{{ lastScan ? lastScan.status|trans : '—' }}</span>
+                <span class="stat-tile__label">{{ 'project.show.stats.last_scan'|trans }}</span>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'project.show.outdated_dependencies_title'|trans }}</h2>
+            {% if outdatedDependencyRows is empty %}
+                <p class="empty-state">{{ 'project.show.outdated_dependencies_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'project.show.outdated_dependencies.table.package'|trans }}</th>
+                            <th>{{ 'project.show.outdated_dependencies.table.current_version'|trans }}</th>
+                            <th>{{ 'project.show.outdated_dependencies.table.latest_version'|trans }}</th>
+                            <th>{{ 'project.show.outdated_dependencies.table.manifest'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in outdatedDependencyRows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.dependency.package.vendor.name }}/{{ row.dependency.package.name }}</td>
+                                <td>{{ row.dependency.lockedVersion }}</td>
+                                <td><span class="badge badge--outdated">{{ row.latestVersion }}</span></td>
+                                <td>{{ row.dependency.manifest.path }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'project.show.manifests_title'|trans }}</h2>
+            {% if manifestRows is empty %}
+                <p class="empty-state">{{ 'project.show.manifests_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'manifest.index.table.path'|trans }}</th>
+                            <th>{{ 'project.show.manifests.table.technology'|trans }}</th>
+                            <th>{{ 'manifest.index.table.dependency_manager'|trans }}</th>
+                            <th>{{ 'manifest.index.table.lockfile'|trans }}</th>
+                            <th>{{ 'manifest.index.table.dependencies'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in manifestRows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.manifest.path }}</td>
+                                <td>
+                                    {% if row.technology %}
+                                        <span class="badge badge--neutral">{{ row.technology.getLabel() }} {{ row.technologyVersion }}</span>
+                                        <span class="badge badge--{{ row.technologySupportStatus.value }}">{{ ('technology_support_status.' ~ row.technologySupportStatus.value)|trans }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge badge--neutral">{{ row.manifest.dependencyManager.name }}</span></td>
+                                <td>
+                                    {% if row.manifest.lockPath %}
+                                        {{ row.manifest.lockPath }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.dependencyCount }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'project.show.scans_title'|trans }}</h2>
+            {% if scans is empty %}
+                <p class="empty-state">{{ 'project.show.scans_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'scan.index.table.manifest'|trans }}</th>
+                            <th>{{ 'scan.index.table.status'|trans }}</th>
+                            <th>{{ 'scan.index.table.started_at'|trans }}</th>
+                            <th>{{ 'scan.index.table.completed_at'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in scans %}
+                            <tr>
+                                <td class="projects-table__name">{{ scan.manifest.path }}</td>
+                                <td>
+                                    <span class="badge badge--{{ scan.status.value }}">{{ scan.status|trans }}</span>
+                                    {% if scan.error %}
+                                        <p class="text-muted">{{ scan.error }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ scan.startedAt ? scan.startedAt|date('d/m/Y H:i') : '—' }}</td>
+                                <td>{{ scan.completedAt ? scan.completedAt|date('d/m/Y H:i') : '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

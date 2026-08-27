@@ -15,6 +15,7 @@ framework:
             App\Domain\Command\Manifest\ScanManifestDependenciesCommand: async
             App\Domain\Command\Package\FetchAllPackageCommand: async
             App\Domain\Command\Package\GetPackageVersionCommand: async
+            App\Domain\Command\Technology\RefreshTechnologySupportCommand: async
 
 when@test:
     framework:

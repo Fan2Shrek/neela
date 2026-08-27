@@ -28,7 +28,7 @@
                     <tbody>
                         {% for row in rows %}
                             <tr>
-                                <td class="projects-table__name">{{ row.project.name }}</td>
+                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
                                 <td>
                                     {% for name in row.dependencyManagers %}
                                         <span class="badge badge--neutral">{{ name }}</span>

@@ -6,23 +6,30 @@
     font-weight: 600;
     margin-right: 0.25rem;
 
-    &--neutral {
+    &--neutral,
+    &--unknown {
         background-color: var(--neela-neutral-bg);
         color: var(--neela-text-muted);
     }
 
-    &--completed {
+    &--completed,
+    &--up_to_date,
+    &--lts {
         background-color: var(--neela-success-bg);
         color: var(--neela-success);
     }
 
     &--pending,
-    &--in_progress {
+    &--in_progress,
+    &--partially_up_to_date,
+    &--technology_outdated {
         background-color: var(--neela-warning-bg);
         color: var(--neela-warning);
     }
 
-    &--failed {
+    &--failed,
+    &--outdated,
+    &--end_of_life {
         background-color: var(--neela-danger-bg);
         color: var(--neela-danger);
     }

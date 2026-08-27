@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\DependencyManager;
 
 use App\Service\DependencyManager\NpmDependencyManager;
+use App\Service\PackageRegistry\PackageRegistryInterface;
 use PHPUnit\Framework\TestCase;
 
 final class NpmDependencyManagerTest extends TestCase
@@ -30,7 +31,7 @@ final class NpmDependencyManagerTest extends TestCase
             ],
         ]);
 
-        $dependencies = (new NpmDependencyManager())->getDependencies($manifest, $lock);
+        $dependencies = $this->npm()->getDependencies($manifest, $lock);
 
         self::assertCount(3, $dependencies);
 
@@ -61,7 +62,7 @@ final class NpmDependencyManagerTest extends TestCase
             ],
         ]);
 
-        $dependencies = (new NpmDependencyManager())->getDependencies($manifest, $lock);
+        $dependencies = $this->npm()->getDependencies($manifest, $lock);
 
         self::assertCount(1, $dependencies);
         self::assertSame('4.17.21', $dependencies[0]->lockedVersion);
@@ -71,9 +72,14 @@ final class NpmDependencyManagerTest extends TestCase
     {
         $manifest = json_encode(['dependencies' => ['lodash' => '^4.17.21']]);
 
-        $dependencies = (new NpmDependencyManager())->getDependencies($manifest, null);
+        $dependencies = $this->npm()->getDependencies($manifest, null);
 
         self::assertCount(1, $dependencies);
         self::assertNull($dependencies[0]->lockedVersion);
+    }
+
+    private function npm(): NpmDependencyManager
+    {
+        return new NpmDependencyManager($this->createStub(PackageRegistryInterface::class));
     }
 }

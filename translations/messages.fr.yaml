@@ -13,6 +13,13 @@ nav:
 dashboard:
     title: 'Dashboard'
     projects_tracked: '{0} Aucun projet suivi|{1} Un projet suivi|]1,Inf[ %count% projets suivis'
+    projects_up_to_date: 'projets à jour'
+    projects_partially_up_to_date: 'projets partiellement à jour'
+    projects_outdated: 'projets à mettre à jour'
+    projects_needing_update_title: 'Projets avec mise à jour disponible'
+    projects_needing_update_empty: 'Tous les projets sont à jour.'
+    projects_needing_update_status: 'Statut'
+    scans_title: 'Scans'
     scans_up_to_date: 'scans à jour'
     scans_pending: 'scans en attente'
     scans_failed: 'scans en erreur'
@@ -22,6 +29,18 @@ scan_status:
     in_progress: 'En cours'
     completed: 'À jour'
     failed: 'En erreur'
+
+project_update_status:
+    up_to_date: 'À jour'
+    partially_up_to_date: 'Partiellement à jour'
+    outdated: 'À mettre à jour'
+
+technology_support_status:
+    up_to_date: 'À jour'
+    lts: 'LTS'
+    technology_outdated: 'Obsolète'
+    end_of_life: 'Fin de vie'
+    unknown: 'Inconnu'
 
 project:
     form:
@@ -41,6 +60,27 @@ project:
             dependency_managers: 'Gestionnaires'
             manifests: 'Manifests'
             last_scan: 'Dernier scan'
+    show:
+        back_to_projects: 'Retour aux projets'
+        outdated_dependencies_title: 'Dépendances obsolètes'
+        outdated_dependencies_empty: 'Aucune dépendance obsolète.'
+        outdated_dependencies:
+            table:
+                package: 'Paquet'
+                current_version: 'Version actuelle'
+                latest_version: 'Dernière version'
+                manifest: 'Manifest'
+        manifests_title: 'Manifests'
+        manifests_empty: 'Aucun manifest découvert pour le moment.'
+        manifests:
+            table:
+                technology: 'Technologie'
+        scans_title: 'Scans récents'
+        scans_empty: 'Aucun scan pour le moment.'
+        stats:
+            manifests: 'Manifests'
+            dependencies: 'Dépendances'
+            last_scan: 'Dernier scan'
 
 project.import.queued: 'Le projet a été mis en file d''attente pour import.'
 
@@ -49,6 +89,12 @@ package:
         title: 'Paquets'
         subtitle: '{0} Aucun paquet découvert|{1} Un paquet découvert|]1,Inf[ %count% paquets découverts'
         empty_state: 'Aucun paquet découvert pour le moment.'
+        filters:
+            search_placeholder: 'Rechercher par vendor/paquet...'
+            all_dependency_managers: 'Tous les gestionnaires'
+            apply: 'Filtrer'
+            clear: 'Réinitialiser'
+            no_results: 'Aucun paquet ne correspond à ces filtres.'
         table:
             package: 'Paquet'
             dependency_manager: 'Gestionnaire'

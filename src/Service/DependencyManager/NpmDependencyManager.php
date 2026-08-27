@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Service\PackageRegistry\NpmRegistryClient;
 use App\Service\PackageRegistry\PackageRegistryInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class NpmDependencyManager implements DependencyManagerInterface
 {
+    public function __construct(
+        #[Autowire(service: NpmRegistryClient::class)]
+        private readonly PackageRegistryInterface $registry,
+    ) {
+    }
+
     public function getName(): string
     {
         return 'npm';
@@ -30,8 +38,7 @@ final class NpmDependencyManager implements DependencyManagerInterface
 
     public function getRegistry(): ?PackageRegistryInterface
     {
-        // No npm registry client yet.
-        return null;
+        return $this->registry;
     }
 
     public function getDependencies(string $manifestContent, ?string $lockContent): array

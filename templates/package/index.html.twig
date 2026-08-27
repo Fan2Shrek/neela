@@ -11,9 +11,29 @@
             </div>
         </header>
 
+        <form method="get" class="filter-bar">
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                placeholder="{{ 'package.index.filters.search_placeholder'|trans }}"
+                class="form-input"
+            >
+            <select name="dependency_manager" class="form-input">
+                <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
+                {% for dependencyManager in dependencyManagers %}
+                    <option value="{{ dependencyManager.name }}" {{ dependencyManager.name == dependencyManagerName ? 'selected' : '' }}>{{ dependencyManager.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="button button--primary">{{ 'package.index.filters.apply'|trans }}</button>
+            {% if isFiltered %}
+                <a href="{{ path('app_package_index') }}" class="button button--secondary">{{ 'package.index.filters.clear'|trans }}</a>
+            {% endif %}
+        </form>
+
         <section class="projects">
             {% if rows is empty %}
-                <p class="empty-state">{{ 'package.index.empty_state'|trans }}</p>
+                <p class="empty-state">{{ (isFiltered ? 'package.index.filters.no_results' : 'package.index.empty_state')|trans }}</p>
             {% else %}
                 <table class="projects-table">
                     <thead>

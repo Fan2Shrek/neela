@@ -10,6 +10,7 @@ use App\Entity\DependencyManager;
 use App\Entity\Package;
 use App\Entity\Vendor;
 use App\Entity\Version;
+use App\Enum\Stability;
 use App\Repository\PackageRepository;
 use App\Repository\VersionRepository;
 use App\Service\DependencyManager\DependencyManagerInterface;
@@ -66,7 +67,7 @@ final class GetPackageVersionHandlerTest extends TestCase
         $packageRepository = $this->createStub(PackageRepository::class);
         $packageRepository->method('find')->willReturn($package);
 
-        $existingVersion = new Version($package, 'v6.4.18', '6.4.18.0');
+        $existingVersion = new Version($package, 'v6.4.18', '6.4.18.0', Stability::STABLE);
 
         $versionRepository = $this->createStub(VersionRepository::class);
         $versionRepository->method('findOneBy')->willReturnCallback(
@@ -82,8 +83,8 @@ final class GetPackageVersionHandlerTest extends TestCase
 
         $registry = $this->createStub(PackageRegistryInterface::class);
         $registry->method('getVersions')->willReturn([
-            new PackageVersionData('v6.4.19', '6.4.19.0', new \DateTimeImmutable('2024-08-14'), '>=8.1'),
-            new PackageVersionData('v6.4.18', '6.4.18.0', new \DateTimeImmutable('2024-07-01'), '>=8.1'),
+            new PackageVersionData('v6.4.19', '6.4.19.0', new \DateTimeImmutable('2024-08-14'), '>=8.1', Stability::STABLE),
+            new PackageVersionData('v6.4.18', '6.4.18.0', new \DateTimeImmutable('2024-07-01'), '>=8.1', Stability::STABLE),
         ]);
 
         $handler = new GetPackageVersionHandler(

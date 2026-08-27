@@ -27,5 +27,14 @@
 
     &__name {
         font-weight: 600;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
     }
 }

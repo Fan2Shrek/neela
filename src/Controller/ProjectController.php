@@ -5,17 +5,25 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Domain\Command\Project\ImportProjectCommand;
+use App\Entity\Dependency;
 use App\Entity\Manifest;
 use App\Entity\Project;
 use App\Form\ProjectType;
+use App\Repository\DependencyRepository;
 use App\Repository\ManifestRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
+use App\Repository\VersionRepository;
+use App\Service\Package\PackageUpdateChecker;
+use App\Service\Technology\DetectedTechnology;
+use App\Service\Technology\TechnologyDetector;
+use App\Service\Technology\TechnologySupportEvaluator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ProjectController extends AbstractController
@@ -24,6 +32,11 @@ final class ProjectController extends AbstractController
         private readonly ProjectRepository $projectRepository,
         private readonly ManifestRepository $manifestRepository,
         private readonly ScanRepository $scanRepository,
+        private readonly DependencyRepository $dependencyRepository,
+        private readonly VersionRepository $versionRepository,
+        private readonly PackageUpdateChecker $packageUpdateChecker,
+        private readonly TechnologyDetector $technologyDetector,
+        private readonly TechnologySupportEvaluator $technologySupportEvaluator,
         private readonly MessageBusInterface $bus,
         private readonly TranslatorInterface $translator,
     ) {
@@ -74,6 +87,62 @@ final class ProjectController extends AbstractController
 
         return $this->render('project/new.html.twig', [
             'form' => $form,
+        ]);
+    }
+
+    #[Route('/projects/{id}', name: 'app_project_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    public function show(Project $project): Response
+    {
+        $manifests = $this->manifestRepository->findByProjectWithDependencyManager($project);
+        $dependencyCounts = $this->dependencyRepository->countByManifest();
+        $dependencies = $this->dependencyRepository->findByProjectWithPackage($project);
+
+        $dependenciesByManifestId = [];
+        foreach ($dependencies as $dependency) {
+            $dependenciesByManifestId[$dependency->getManifest()->getId()][] = $dependency;
+        }
+
+        $manifestRows = array_map(function (Manifest $manifest) use ($dependencyCounts, $dependenciesByManifestId): array {
+            $detected = $this->technologyDetector->detect($dependenciesByManifestId[$manifest->getId()] ?? []);
+
+            return [
+                'manifest' => $manifest,
+                'dependencyCount' => $dependencyCounts[$manifest->getId()] ?? 0,
+                'technology' => $detected?->technology,
+                'technologyVersion' => $detected?->dependency->getLockedVersion(),
+                'technologySupportStatus' => $detected instanceof DetectedTechnology
+                    ? $this->technologySupportEvaluator->evaluate($detected->technology, $detected->dependency->getLockedVersion())
+                    : null,
+            ];
+        }, $manifests);
+
+        $packageIds = array_values(array_unique(array_map(
+            static fn (Dependency $dependency): int => $dependency->getPackage()->getId(),
+            $dependencies,
+        )));
+        $stableVersionsByPackageId = $this->versionRepository->findStableVersionsIndexedByPackageId($packageIds);
+
+        $outdatedDependencyRows = [];
+        foreach ($dependencies as $dependency) {
+            $availableVersions = $stableVersionsByPackageId[$dependency->getPackage()->getId()] ?? [];
+            $latestVersion = $this->packageUpdateChecker->findLatestSatisfying($availableVersions, $dependency->getConstraint());
+
+            if (null !== $latestVersion && $dependency->getLockedVersion() !== $latestVersion) {
+                $outdatedDependencyRows[] = [
+                    'dependency' => $dependency,
+                    'latestVersion' => $latestVersion,
+                ];
+            }
+        }
+
+        return $this->render('project/show.html.twig', [
+            'project' => $project,
+            'manifestRows' => $manifestRows,
+            'manifestCount' => \count($manifests),
+            'dependencyCount' => array_sum(array_column($manifestRows, 'dependencyCount')),
+            'outdatedDependencyRows' => $outdatedDependencyRows,
+            'scans' => $this->scanRepository->findByProjectOrderedByMostRecent($project),
+            'lastScan' => $this->scanRepository->findLatestForProject($project),
         ]);
     }
 }

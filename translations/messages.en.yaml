@@ -13,6 +13,13 @@ nav:
 dashboard:
     title: 'Dashboard'
     projects_tracked: '{0} No projects tracked|{1} One project tracked|]1,Inf[ %count% projects tracked'
+    projects_up_to_date: 'up-to-date projects'
+    projects_partially_up_to_date: 'partially up-to-date projects'
+    projects_outdated: 'projects with updates available'
+    projects_needing_update_title: 'Projects with updates available'
+    projects_needing_update_empty: 'All projects are up to date.'
+    projects_needing_update_status: 'Status'
+    scans_title: 'Scans'
     scans_up_to_date: 'up-to-date scans'
     scans_pending: 'pending scans'
     scans_failed: 'failed scans'
@@ -22,6 +29,18 @@ scan_status:
     in_progress: 'In progress'
     completed: 'Completed'
     failed: 'Failed'
+
+project_update_status:
+    up_to_date: 'Up to date'
+    partially_up_to_date: 'Partially up to date'
+    outdated: 'Outdated'
+
+technology_support_status:
+    up_to_date: 'Up to date'
+    lts: 'LTS'
+    technology_outdated: 'Outdated'
+    end_of_life: 'End of life'
+    unknown: 'Unknown'
 
 project:
     form:
@@ -41,6 +60,27 @@ project:
             dependency_managers: 'Dependency managers'
             manifests: 'Manifests'
             last_scan: 'Last scan'
+    show:
+        back_to_projects: 'Back to projects'
+        outdated_dependencies_title: 'Outdated dependencies'
+        outdated_dependencies_empty: 'No outdated dependencies.'
+        outdated_dependencies:
+            table:
+                package: 'Package'
+                current_version: 'Current version'
+                latest_version: 'Latest version'
+                manifest: 'Manifest'
+        manifests_title: 'Manifests'
+        manifests_empty: 'No manifests discovered yet.'
+        manifests:
+            table:
+                technology: 'Technology'
+        scans_title: 'Recent scans'
+        scans_empty: 'No scans yet.'
+        stats:
+            manifests: 'Manifests'
+            dependencies: 'Dependencies'
+            last_scan: 'Last scan'
 
 project.import.queued: 'The project has been queued for import.'
 
@@ -49,6 +89,12 @@ package:
         title: 'Packages'
         subtitle: '{0} No packages discovered yet|{1} One package discovered|]1,Inf[ %count% packages discovered'
         empty_state: 'No packages discovered yet.'
+        filters:
+            search_placeholder: 'Search by vendor/package...'
+            all_dependency_managers: 'All dependency managers'
+            apply: 'Filter'
+            clear: 'Clear'
+            no_results: 'No packages match your filters.'
         table:
             package: 'Package'
             dependency_manager: 'Dependency manager'

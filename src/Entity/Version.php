@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Stability;
 use App\Repository\VersionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -29,11 +30,15 @@ class Version
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $runtimeConstraint = null;
 
-    public function __construct(Package $package, string $version, string $normalizedVersion)
+    #[ORM\Column(length: 20, enumType: Stability::class)]
+    private Stability $stability;
+
+    public function __construct(Package $package, string $version, string $normalizedVersion, Stability $stability)
     {
         $this->package = $package;
         $this->version = $version;
         $this->normalizedVersion = $normalizedVersion;
+        $this->stability = $stability;
     }
 
     public function getId(): int
@@ -97,6 +102,18 @@ class Version
     public function setRuntimeConstraint(?string $runtimeConstraint): static
     {
         $this->runtimeConstraint = $runtimeConstraint;
+
+        return $this;
+    }
+
+    public function getStability(): Stability
+    {
+        return $this->stability;
+    }
+
+    public function setStability(Stability $stability): static
+    {
+        $this->stability = $stability;
 
         return $this;
     }

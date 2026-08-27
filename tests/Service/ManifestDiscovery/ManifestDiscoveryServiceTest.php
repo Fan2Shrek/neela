@@ -75,7 +75,7 @@ final class ManifestDiscoveryServiceTest extends TestCase
 
         $service = new ManifestDiscoveryService(
             $vcsResolver,
-            new ManifestMatcher([$this->composer(), new NpmDependencyManager()]),
+            new ManifestMatcher([$this->composer(), new NpmDependencyManager($this->createStub(PackageRegistryInterface::class))]),
             $dependencyManagerRepository,
             $manifestRepository,
             $entityManager,

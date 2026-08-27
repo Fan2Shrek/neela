@@ -55,7 +55,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testComposerAndNpmInSameRepository(): void
     {
-        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager($this->createStub(PackageRegistryInterface::class))]);
 
         $discovered = $matcher->match($this->tree([
             'app/back/composer.json',
@@ -90,7 +90,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testManifestsInSubdirectories(): void
     {
-        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager($this->createStub(PackageRegistryInterface::class))]);
 
         $discovered = $matcher->match($this->tree([
             'frontend/package.json',
@@ -148,7 +148,7 @@ final class ManifestMatcherTest extends TestCase
             }
         };
 
-        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager(), $cargo]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager($this->createStub(PackageRegistryInterface::class)), $cargo]);
 
         $discovered = $matcher->match($this->tree([
             'composer.json',

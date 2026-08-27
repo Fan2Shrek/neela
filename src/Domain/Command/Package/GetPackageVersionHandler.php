@@ -36,7 +36,6 @@ final class GetPackageVersionHandler
             return;
         }
 
-        $versions = [];
         foreach ($registry->getVersions($vendor->getName(), $package->getName()) as $versionData) {
             $version = $this->versionRepository->findOneBy([
                 'package' => $package,
@@ -44,25 +43,24 @@ final class GetPackageVersionHandler
             ]);
 
             if (null === $version) {
-                $version = new Version($package, $versionData->version, $versionData->normalizedVersion);
+                $version = new Version($package, $versionData->version, $versionData->normalizedVersion, $versionData->stability);
                 $this->entityManager->persist($version);
             } else {
                 $version->setVersion($versionData->version);
+                $version->setStability($versionData->stability);
             }
 
             $version->setReleasedAt($versionData->releasedAt);
             $version->setRuntimeConstraint($versionData->runtimeConstraint);
-            $versions[] = $version;
         }
 
         $this->entityManager->flush();
 
-        // A single package can have hundreds of releases on the registry. Detach them
-        // once persisted so they don't pile up in the EntityManager's identity map for
-        // the rest of this (still fully synchronous) request — Package/Vendor stay
-        // managed since the caller (ManifestScanner) keeps using them afterwards.
-        foreach ($versions as $version) {
-            $this->entityManager->detach($version);
-        }
+        // This handler runs inside a long-lived worker process that handles one message
+        // per package, one after another, for as long as the worker stays up — nothing
+        // else in that process still needs this package's entities afterwards. Without
+        // clearing, hundreds of packages' worth of Package/Vendor/Version pile up in the
+        // EntityManager's identity map across the batch until the worker itself OOMs.
+        $this->entityManager->clear();
     }
 }
