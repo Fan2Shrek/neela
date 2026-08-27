@@ -63,7 +63,7 @@ final class DashboardController extends AbstractController
 
         usort($projectsNeedingUpdate, static fn (array $a, array $b): int => $severity($a['status']) <=> $severity($b['status']));
 
-        $vulnerabilityExposure = $this->vulnerabilityRepository->countAndMaxSeverityByProject();
+        $vulnerabilityExposure = $this->vulnerabilityRepository->severityBreakdownByProject();
 
         $projectsWithVulnerabilities = array_values(array_filter(array_map(
             static function (Project $project) use ($vulnerabilityExposure): ?array {
@@ -75,10 +75,10 @@ final class DashboardController extends AbstractController
         )));
 
         // Most critical exposure first; within the same severity, the project with the
-        // most affected dependencies is the more urgent one to look at.
+        // most vulnerabilities is the more urgent one to look at.
         usort(
             $projectsWithVulnerabilities,
-            static fn (array $a, array $b): int => ($b['maxSeverityRank'] <=> $a['maxSeverityRank']) ?: ($b['count'] <=> $a['count']),
+            static fn (array $a, array $b): int => ($b['maxSeverityRank'] <=> $a['maxSeverityRank']) ?: ($b['total'] <=> $a['total']),
         );
 
         $criticalProjectCount = \count(array_filter(

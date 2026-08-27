@@ -54,7 +54,13 @@
                         {% for row in projectsWithVulnerabilities %}
                             <tr>
                                 <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
-                                <td><span class="badge badge--{{ row.maxSeverity|default('unknown')|lower }}">{{ row.count }} {{ row.maxSeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span></td>
+                                <td>
+                                    {% for severity in ['CRITICAL', 'HIGH', 'MODERATE', 'LOW', 'UNKNOWN'] %}
+                                        {% if row.bySeverity[severity] is defined %}
+                                            <span class="badge badge--{{ severity|lower }}">{{ row.bySeverity[severity] }} {{ severity == 'UNKNOWN' ? 'project.show.vulnerabilities.severity_unknown'|trans : severity }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
