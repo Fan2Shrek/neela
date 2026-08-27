@@ -10,6 +10,8 @@ use App\Repository\VersionRepository;
 use App\Service\Package\PackageUpdateChecker;
 use App\Service\Project\ProjectUpdateStatusCalculator;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Uid\Uuid;
 
 final class ProjectUpdateStatusCalculatorTest extends TestCase
@@ -44,7 +46,7 @@ final class ProjectUpdateStatusCalculatorTest extends TestCase
             2 => ['v1.0.0'],
         ]);
 
-        $calculator = new ProjectUpdateStatusCalculator($dependencyRepository, $versionRepository, new PackageUpdateChecker());
+        $calculator = new ProjectUpdateStatusCalculator($dependencyRepository, $versionRepository, new PackageUpdateChecker(), new TagAwareAdapter(new ArrayAdapter()));
 
         $statuses = $calculator->calculate();
 
@@ -52,5 +54,21 @@ final class ProjectUpdateStatusCalculatorTest extends TestCase
         self::assertSame(ProjectUpdateStatus::PARTIALLY_UP_TO_DATE, $statuses[(string) $partiallyUpToDateProject]);
         self::assertSame(ProjectUpdateStatus::OUTDATED, $statuses[(string) $outdatedProject]);
         self::assertArrayNotHasKey((string) $unknownPackageProject, $statuses);
+    }
+
+    public function testResultIsCachedAcrossCalls(): void
+    {
+        $dependencyRepository = $this->createMock(DependencyRepository::class);
+        $dependencyRepository->expects(self::once())
+            ->method('findLockedVersionsGroupedByProject')
+            ->willReturn([]);
+
+        $versionRepository = $this->createStub(VersionRepository::class);
+        $versionRepository->method('findStableVersionsIndexedByPackageId')->willReturn([]);
+
+        $calculator = new ProjectUpdateStatusCalculator($dependencyRepository, $versionRepository, new PackageUpdateChecker(), new TagAwareAdapter(new ArrayAdapter()));
+
+        $calculator->calculate();
+        $calculator->calculate();
     }
 }

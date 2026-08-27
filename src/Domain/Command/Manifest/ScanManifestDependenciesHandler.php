@@ -7,10 +7,12 @@ namespace App\Domain\Command\Manifest;
 use App\Entity\Scan;
 use App\Enum\ScanStatus;
 use App\Repository\ScanRepository;
+use App\Service\Cache\CacheTags;
 use App\Service\ManifestScannerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 #[AsMessageHandler]
 final class ScanManifestDependenciesHandler
@@ -20,6 +22,7 @@ final class ScanManifestDependenciesHandler
         private ManagerRegistry $managerRegistry,
         private ManifestScannerInterface $manifestScanner,
         private ScanRepository $scanRepository,
+        private TagAwareCacheInterface $cache,
     ) {
     }
 
@@ -38,6 +41,10 @@ final class ScanManifestDependenciesHandler
             $this->recordFailure($command->scanId, $exception->getMessage());
 
             throw $exception;
+        } finally {
+            // Dependencies may already have been persisted by the scanner even if
+            // something later fails, so invalidate regardless of the outcome.
+            $this->cache->invalidateTags([CacheTags::SCAN_DATA]);
         }
 
         $scan->setStatus(ScanStatus::COMPLETED);

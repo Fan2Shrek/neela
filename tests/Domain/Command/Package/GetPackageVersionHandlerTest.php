@@ -17,8 +17,10 @@ use App\Service\DependencyManager\DependencyManagerInterface;
 use App\Service\DependencyManager\DependencyManagerResolver;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\PackageRegistry\PackageVersionData;
+use App\Service\Cache\CacheTags;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class GetPackageVersionHandlerTest extends TestCase
 {
@@ -32,6 +34,7 @@ final class GetPackageVersionHandlerTest extends TestCase
             $this->createStub(VersionRepository::class),
             new DependencyManagerResolver([]),
             $this->createStub(EntityManagerInterface::class),
+            $this->createStub(TagAwareCacheInterface::class),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -50,11 +53,15 @@ final class GetPackageVersionHandlerTest extends TestCase
         $entityManager->expects(self::never())->method('persist');
         $entityManager->expects(self::never())->method('flush');
 
+        $cache = $this->createMock(TagAwareCacheInterface::class);
+        $cache->expects(self::never())->method('invalidateTags');
+
         $handler = new GetPackageVersionHandler(
             $packageRepository,
             $this->createStub(VersionRepository::class),
             new DependencyManagerResolver([$this->dependencyManager('npm', null)]),
             $entityManager,
+            $cache,
         );
 
         $handler(new GetPackageVersionCommand(1));
@@ -87,11 +94,15 @@ final class GetPackageVersionHandlerTest extends TestCase
             new PackageVersionData('v6.4.18', '6.4.18.0', new \DateTimeImmutable('2024-07-01'), '>=8.1', Stability::STABLE),
         ]);
 
+        $cache = $this->createMock(TagAwareCacheInterface::class);
+        $cache->expects(self::once())->method('invalidateTags')->with([CacheTags::PACKAGE_VERSIONS]);
+
         $handler = new GetPackageVersionHandler(
             $packageRepository,
             $versionRepository,
             new DependencyManagerResolver([$this->dependencyManager('Composer', $registry)]),
             $entityManager,
+            $cache,
         );
 
         $handler(new GetPackageVersionCommand(1));

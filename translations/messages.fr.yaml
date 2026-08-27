@@ -10,6 +10,7 @@ nav:
     packages: 'Paquets'
     vendors: 'Vendors'
     scans: 'Scans'
+    settings: 'Paramètres'
 
 dashboard:
     title: 'Dashboard'
@@ -189,3 +190,15 @@ scan:
             status: 'Statut'
             started_at: 'Démarré le'
             completed_at: 'Terminé le'
+
+settings:
+    title: 'Paramètres'
+    github_section_title: 'GitHub'
+    github_token_status: 'Token GitHub :'
+    configured: 'Configuré'
+    not_configured: 'Non configuré'
+    github_token: 'Token GitHub'
+    github_token_hint: 'Un jeton d''accès personnel avec un accès en lecture aux dépôts à suivre, utilisé pour éviter les limites de l''API GitHub et importer des dépôts privés. Laisser vide pour conserver le token actuel.'
+    remove_github_token: 'Retirer le token configuré'
+    save: 'Enregistrer'
+    saved: 'Paramètres enregistrés.'

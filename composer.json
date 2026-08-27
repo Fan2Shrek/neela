@@ -99,6 +99,9 @@
         "phpunit/phpunit": "^13.3",
         "symfony/browser-kit": "8.1.*",
         "symfony/css-selector": "8.1.*",
-        "symfony/maker-bundle": "^1.67"
+        "symfony/debug-bundle": "8.1.*",
+        "symfony/maker-bundle": "^1.67",
+        "symfony/stopwatch": "8.1.*",
+        "symfony/web-profiler-bundle": "8.1.*"
     }
 }

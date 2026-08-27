@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service\Package;
 
+use Composer\Semver\Comparator;
+use Composer\Semver\Constraint\Constraint;
 use Composer\Semver\Semver;
+use Composer\Semver\VersionParser;
 
 final class PackageUpdateChecker
 {
@@ -18,8 +21,21 @@ final class PackageUpdateChecker
      */
     public function findLatestSatisfying(array $availableVersions, string $constraint): ?string
     {
+        $versionParser = new VersionParser();
+
         try {
-            $satisfying = Semver::satisfiedBy($availableVersions, $constraint);
+            // Semver::satisfiedBy() re-parses the constraint string on every single
+            // version it checks; parsing it once here matters a lot for packages with
+            // hundreds of releases (e.g. symfony/framework-bundle) checked across many
+            // projects.
+            $parsedConstraint = $versionParser->parseConstraints($constraint);
+
+            $satisfying = [];
+            foreach ($availableVersions as $version) {
+                if ($parsedConstraint->matches(new Constraint('==', $versionParser->normalize($version)))) {
+                    $satisfying[] = $version;
+                }
+            }
         } catch (\UnexpectedValueException) {
             // Not every ecosystem's constraint syntax is one Composer's parser
             // understands (npm git/workspace/tag references, "latest", local paths...).
@@ -30,7 +46,16 @@ final class PackageUpdateChecker
             return null;
         }
 
-        return Semver::rsort($satisfying)[0];
+        // A full Semver::rsort() is O(k log k) comparisons, each constructing its own
+        // Constraint objects; a single linear max-scan needs only k-1.
+        $latest = array_shift($satisfying);
+        foreach ($satisfying as $version) {
+            if (Comparator::greaterThan($version, $latest)) {
+                $latest = $version;
+            }
+        }
+
+        return $latest;
     }
 
     /**

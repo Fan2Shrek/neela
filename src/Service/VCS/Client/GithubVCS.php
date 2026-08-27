@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\VCS\Client;
 
+use App\Repository\AppSettingsRepository;
 use App\Service\VCS\Client\Exception\GitHubApiException;
 use App\Service\VCS\Client\Exception\RepositoryAccessDeniedException;
 use App\Service\VCS\Client\Exception\RepositoryNotFoundException;
@@ -11,6 +12,7 @@ use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
 use App\Service\VCS\VCSInterface;
 use App\Service\VCS\VCSProject;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -21,7 +23,11 @@ final class GithubVCS implements VCSInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $githubToken = '',
+        private readonly AppSettingsRepository $appSettingsRepository,
+        // Falls back to the env var when nothing is configured from the settings page,
+        // so a self-hosted install can still set it once at deploy time if preferred.
+        #[Autowire('%env(GITHUB_TOKEN)%')]
+        private readonly string $fallbackGithubToken = '',
     ) {
     }
 
@@ -114,6 +120,18 @@ final class GithubVCS implements VCSInterface
             ?? throw new GitHubApiException(\sprintf('Unable to determine the default branch of "%s/%s".', $owner, $repo));
     }
 
+    /**
+     * Read fresh on every request rather than cached at construction time: this
+     * service can live inside a long-running worker process, and a token saved from
+     * the settings page must take effect on the very next scan, not after a restart.
+     */
+    private function resolveGithubToken(): string
+    {
+        $token = $this->appSettingsRepository->get()->getGithubToken();
+
+        return (null !== $token && '' !== $token) ? $token : $this->fallbackGithubToken;
+    }
+
     private function request(string $method, string $path, array $options = []): ResponseInterface
     {
         $headers = [
@@ -121,8 +139,10 @@ final class GithubVCS implements VCSInterface
             'X-GitHub-Api-Version' => '2022-11-28',
         ];
 
-        if ('' !== $this->githubToken) {
-            $headers['Authorization'] = 'Bearer '.$this->githubToken;
+        $token = $this->resolveGithubToken();
+
+        if ('' !== $token) {
+            $headers['Authorization'] = 'Bearer '.$token;
         }
 
         try {

@@ -12,10 +12,12 @@ use App\Entity\Project;
 use App\Entity\Scan;
 use App\Enum\ScanStatus;
 use App\Repository\ScanRepository;
+use App\Service\Cache\CacheTags;
 use App\Service\ManifestScannerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class ScanManifestDependenciesHandlerTest extends TestCase
 {
@@ -32,11 +34,15 @@ final class ScanManifestDependenciesHandlerTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturn(true);
 
+        $cache = $this->createMock(TagAwareCacheInterface::class);
+        $cache->expects(self::once())->method('invalidateTags')->with([CacheTags::SCAN_DATA]);
+
         $handler = new ScanManifestDependenciesHandler(
             $entityManager,
             $this->createStub(ManagerRegistry::class),
             $manifestScanner,
             $scanRepository,
+            $cache,
         );
 
         $handler(new ScanManifestDependenciesCommand(1));
@@ -66,11 +72,15 @@ final class ScanManifestDependenciesHandlerTest extends TestCase
         $managerRegistry = $this->createStub(ManagerRegistry::class);
         $managerRegistry->method('resetManager')->willReturn($freshEntityManager);
 
+        $cache = $this->createMock(TagAwareCacheInterface::class);
+        $cache->expects(self::once())->method('invalidateTags')->with([CacheTags::SCAN_DATA]);
+
         $handler = new ScanManifestDependenciesHandler(
             $entityManager,
             $managerRegistry,
             $manifestScanner,
             $scanRepository,
+            $cache,
         );
 
         $this->expectException(\RuntimeException::class);

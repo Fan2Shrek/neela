@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'settings.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <h1>{{ 'settings.title'|trans }}</h1>
+        </header>
+
+        <div class="form-page">
+            <h2>{{ 'settings.github_section_title'|trans }}</h2>
+            <p class="text-muted">
+                {{ 'settings.github_token_status'|trans }}
+                {% if hasGithubToken %}
+                    <span class="badge badge--up_to_date">{{ 'settings.configured'|trans }}</span>
+                {% else %}
+                    <span class="badge badge--unknown">{{ 'settings.not_configured'|trans }}</span>
+                {% endif %}
+            </p>
+
+            {{ form_start(form, {'action': path('app_settings')}) }}
+                <div class="form-group">
+                    {{ form_label(form.githubToken) }}
+                    {{ form_widget(form.githubToken, {attr: {class: 'form-input'}}) }}
+                    <p class="form-hint">{{ 'settings.github_token_hint'|trans }}</p>
+                    <div class="form-errors">{{ form_errors(form.githubToken) }}</div>
+                </div>
+
+                <div class="form-check">
+                    {{ form_widget(form.removeGithubToken) }}
+                    {{ form_label(form.removeGithubToken) }}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button--primary">{{ 'settings.save'|trans }}</button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

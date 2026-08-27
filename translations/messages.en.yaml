@@ -10,6 +10,7 @@ nav:
     packages: 'Packages'
     vendors: 'Vendors'
     scans: 'Scans'
+    settings: 'Settings'
 
 dashboard:
     title: 'Dashboard'
@@ -189,3 +190,15 @@ scan:
             status: 'Status'
             started_at: 'Started at'
             completed_at: 'Completed at'
+
+settings:
+    title: 'Settings'
+    github_section_title: 'GitHub'
+    github_token_status: 'GitHub token:'
+    configured: 'Configured'
+    not_configured: 'Not configured'
+    github_token: 'GitHub token'
+    github_token_hint: 'A personal access token with read access to the repositories you want to track, used to avoid GitHub API rate limits and to import private repositories. Leave blank to keep the current token unchanged.'
+    remove_github_token: 'Remove the configured token'
+    save: 'Save'
+    saved: 'Settings saved.'

@@ -7,11 +7,14 @@ namespace App\Tests\Service\VCS\Client;
 use App\Service\VCS\Client\Exception\GitHubApiException;
 use App\Service\VCS\Client\Exception\RepositoryAccessDeniedException;
 use App\Service\VCS\Client\Exception\RepositoryNotFoundException;
+use App\Entity\AppSettings;
+use App\Repository\AppSettingsRepository;
 use App\Service\VCS\Client\GithubVCS;
 use App\Service\VCS\VCSProject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class GithubVCSTest extends TestCase
 {
@@ -29,7 +32,7 @@ final class GithubVCSTest extends TestCase
             ])),
         ]);
 
-        $tree = (new GithubVCS($httpClient))->getTree('git@github.com:acme/my-project.git');
+        $tree = ($this->client($httpClient))->getTree('git@github.com:acme/my-project.git');
 
         self::assertFalse($tree->truncated);
         self::assertCount(2, $tree->entries);
@@ -44,7 +47,7 @@ final class GithubVCSTest extends TestCase
             new MockResponse(json_encode(['truncated' => false, 'tree' => []])),
         ]);
 
-        $tree = (new GithubVCS($httpClient))->getTree('https://github.com/acme/my-project.git');
+        $tree = ($this->client($httpClient))->getTree('https://github.com/acme/my-project.git');
 
         self::assertSame([], $tree->entries);
     }
@@ -56,7 +59,7 @@ final class GithubVCSTest extends TestCase
             new MockResponse(json_encode(['truncated' => true, 'tree' => []])),
         ]);
 
-        $tree = (new GithubVCS($httpClient))->getTree('git@github.com:acme/big-repo.git');
+        $tree = ($this->client($httpClient))->getTree('git@github.com:acme/big-repo.git');
 
         self::assertTrue($tree->truncated);
     }
@@ -68,7 +71,7 @@ final class GithubVCSTest extends TestCase
             new MockResponse(json_encode(['message' => 'Git Repository is empty.']), ['http_code' => 409]),
         ]);
 
-        $tree = (new GithubVCS($httpClient))->getTree('git@github.com:acme/empty-repo.git');
+        $tree = ($this->client($httpClient))->getTree('git@github.com:acme/empty-repo.git');
 
         self::assertSame([], $tree->entries);
         self::assertFalse($tree->truncated);
@@ -82,7 +85,7 @@ final class GithubVCSTest extends TestCase
 
         $this->expectException(RepositoryNotFoundException::class);
 
-        (new GithubVCS($httpClient))->getTree('git@github.com:acme/missing.git');
+        ($this->client($httpClient))->getTree('git@github.com:acme/missing.git');
     }
 
     public function testUnauthorizedAccessThrowsDedicatedException(): void
@@ -93,7 +96,7 @@ final class GithubVCSTest extends TestCase
 
         $this->expectException(RepositoryAccessDeniedException::class);
 
-        (new GithubVCS($httpClient))->getTree('git@github.com:acme/private.git');
+        ($this->client($httpClient))->getTree('git@github.com:acme/private.git');
     }
 
     public function testForbiddenAccessThrowsDedicatedException(): void
@@ -104,7 +107,7 @@ final class GithubVCSTest extends TestCase
 
         $this->expectException(RepositoryAccessDeniedException::class);
 
-        (new GithubVCS($httpClient))->getTree('git@github.com:acme/forbidden.git');
+        ($this->client($httpClient))->getTree('git@github.com:acme/forbidden.git');
     }
 
     public function testUnexpectedApiErrorThrowsGenericException(): void
@@ -115,7 +118,7 @@ final class GithubVCSTest extends TestCase
 
         $this->expectException(GitHubApiException::class);
 
-        (new GithubVCS($httpClient))->getTree('git@github.com:acme/broken.git');
+        ($this->client($httpClient))->getTree('git@github.com:acme/broken.git');
     }
 
     public function testGetVCSInfoParsesOwnerAndRepoFromSshLink(): void
@@ -124,7 +127,7 @@ final class GithubVCSTest extends TestCase
             new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']])),
         ]);
 
-        $info = (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
+        $info = ($this->client($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
 
         self::assertEquals(new VCSProject(name: 'my-project', owner: 'acme'), $info);
     }
@@ -138,7 +141,7 @@ final class GithubVCSTest extends TestCase
             return new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']]));
         });
 
-        (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
+        ($this->client($httpClient))->getVCSInfo('git@github.com:acme/my-project.git');
 
         self::assertSame('https://api.github.com/repos/acme/my-project', $requestedUrl);
     }
@@ -151,7 +154,7 @@ final class GithubVCSTest extends TestCase
 
         $this->expectException(RepositoryNotFoundException::class);
 
-        (new GithubVCS($httpClient))->getVCSInfo('git@github.com:acme/missing.git');
+        ($this->client($httpClient))->getVCSInfo('git@github.com:acme/missing.git');
     }
 
     public function testGetFileContentDecodesBase64Content(): void
@@ -164,7 +167,7 @@ final class GithubVCSTest extends TestCase
             ])),
         ]);
 
-        $content = (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.json');
+        $content = ($this->client($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.json');
 
         self::assertSame('{"require":{"symfony/console":"^6.4"}}', $content);
     }
@@ -182,7 +185,7 @@ final class GithubVCSTest extends TestCase
             return new MockResponse(json_encode(['default_branch' => 'main']));
         });
 
-        (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'app/back/composer.json');
+        ($this->client($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'app/back/composer.json');
 
         self::assertStringContainsString('/repos/acme/my-project/contents/app/back/composer.json', $requestedUrl);
         self::assertStringContainsString('ref=main', $requestedUrl);
@@ -195,8 +198,53 @@ final class GithubVCSTest extends TestCase
             new MockResponse(json_encode(['message' => 'Not Found']), ['http_code' => 404]),
         ]);
 
-        $content = (new GithubVCS($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.lock');
+        $content = ($this->client($httpClient))->getFileContent('git@github.com:acme/my-project.git', 'composer.lock');
 
         self::assertNull($content);
+    }
+
+    public function testAuthorizationHeaderIsSentWhenAGithubTokenIsConfigured(): void
+    {
+        $sentAuthorization = null;
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$sentAuthorization) {
+            foreach ($options['headers'] as $header) {
+                if (str_starts_with($header, 'Authorization:')) {
+                    $sentAuthorization = $header;
+                }
+            }
+
+            return new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']]));
+        });
+
+        $this->client($httpClient, 'ghp_secret')->getVCSInfo('git@github.com:acme/my-project.git');
+
+        self::assertSame('Authorization: Bearer ghp_secret', $sentAuthorization);
+    }
+
+    public function testNoAuthorizationHeaderIsSentWithoutAConfiguredToken(): void
+    {
+        $sentHeaders = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$sentHeaders) {
+            $sentHeaders = $options['headers'];
+
+            return new MockResponse(json_encode(['name' => 'my-project', 'owner' => ['login' => 'acme']]));
+        });
+
+        $this->client($httpClient)->getVCSInfo('git@github.com:acme/my-project.git');
+
+        foreach ($sentHeaders as $header) {
+            self::assertStringNotContainsString('Authorization:', $header);
+        }
+    }
+
+    private function client(HttpClientInterface $httpClient, ?string $githubToken = null): GithubVCS
+    {
+        $settings = new AppSettings();
+        $settings->setGithubToken($githubToken);
+
+        $appSettingsRepository = $this->createStub(AppSettingsRepository::class);
+        $appSettingsRepository->method('get')->willReturn($settings);
+
+        return new GithubVCS($httpClient, $appSettingsRepository);
     }
 }

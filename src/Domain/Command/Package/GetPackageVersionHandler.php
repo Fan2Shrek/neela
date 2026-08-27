@@ -7,9 +7,11 @@ namespace App\Domain\Command\Package;
 use App\Entity\Version;
 use App\Repository\PackageRepository;
 use App\Repository\VersionRepository;
+use App\Service\Cache\CacheTags;
 use App\Service\DependencyManager\DependencyManagerResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 #[AsMessageHandler]
 final class GetPackageVersionHandler
@@ -19,6 +21,7 @@ final class GetPackageVersionHandler
         private VersionRepository $versionRepository,
         private DependencyManagerResolver $dependencyManagerResolver,
         private EntityManagerInterface $entityManager,
+        private TagAwareCacheInterface $cache,
     ) {
     }
 
@@ -55,6 +58,10 @@ final class GetPackageVersionHandler
         }
 
         $this->entityManager->flush();
+
+        // New versions can change what "latest satisfying" resolves to for every
+        // project depending on this package.
+        $this->cache->invalidateTags([CacheTags::PACKAGE_VERSIONS]);
 
         // This handler runs inside a long-lived worker process that handles one message
         // per package, one after another, for as long as the worker stays up — nothing

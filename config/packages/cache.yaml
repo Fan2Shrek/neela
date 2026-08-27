@@ -3,9 +3,12 @@ framework:
         # Unique name of your app: used to compute stable namespaces for cache keys.
         #prefix_seed: your_vendor_name/app_name
 
-        # The "app" cache stores to the filesystem by default.
-        # The data in this cache should persist between deploys.
-        # Other options include:
+        # The default filesystem adapter is local to whichever container/host writes
+        # to it — the web process and the messenger worker never see the same files,
+        # so cache invalidation from one side is invisible to the other. Use the
+        # already-shared Postgres connection instead (no extra infra, same reasoning
+        # as the "failed" messenger transport using doctrine:// for the same purpose).
+        app: cache.adapter.doctrine_dbal
 
         # Redis
         #app: cache.adapter.redis

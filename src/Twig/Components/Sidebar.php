@@ -30,6 +30,7 @@ final class Sidebar
             ['route' => 'app_package_index', 'label' => 'nav.packages', 'icon' => 'tabler:package'],
             ['route' => 'app_vendor_index', 'label' => 'nav.vendors', 'icon' => 'tabler:building'],
             ['route' => 'app_scan_index', 'label' => 'nav.scans', 'icon' => 'tabler:history'],
+            ['route' => 'app_settings', 'label' => 'nav.settings', 'icon' => 'tabler:settings'],
         ];
     }
 
