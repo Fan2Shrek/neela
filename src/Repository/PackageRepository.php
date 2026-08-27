@@ -29,4 +29,23 @@ class PackageRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return array<int, int> vendor id => package count
+     */
+    public function countByVendor(): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('IDENTITY(p.vendor) AS vendorId', 'COUNT(p.id) AS packageCount')
+            ->groupBy('p.vendor')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['vendorId']] = (int) $row['packageCount'];
+        }
+
+        return $counts;
+    }
 }

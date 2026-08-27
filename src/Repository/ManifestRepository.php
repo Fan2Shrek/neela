@@ -15,4 +15,19 @@ class ManifestRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Manifest::class);
     }
+
+    /**
+     * @return Manifest[]
+     */
+    public function findAllWithProjectAndDependencyManager(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->addSelect('p', 'dm')
+            ->join('m.project', 'p')
+            ->join('m.dependencyManager', 'dm')
+            ->orderBy('p.name', 'ASC')
+            ->addOrderBy('m.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

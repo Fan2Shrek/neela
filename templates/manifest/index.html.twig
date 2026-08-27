@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'manifest.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'manifest.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'manifest.index.subtitle'|trans({}, null, null, manifestCount) }}</p>
+            </div>
+        </header>
+
+        <section class="projects">
+            {% if rows is empty %}
+                <p class="empty-state">{{ 'manifest.index.empty_state'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'manifest.index.table.project'|trans }}</th>
+                            <th>{{ 'manifest.index.table.path'|trans }}</th>
+                            <th>{{ 'manifest.index.table.dependency_manager'|trans }}</th>
+                            <th>{{ 'manifest.index.table.lockfile'|trans }}</th>
+                            <th>{{ 'manifest.index.table.dependencies'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.manifest.project.name }}</td>
+                                <td>{{ row.manifest.path }}</td>
+                                <td><span class="badge badge--neutral">{{ row.manifest.dependencyManager.name }}</span></td>
+                                <td>
+                                    {% if row.manifest.lockPath %}
+                                        {{ row.manifest.lockPath }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.dependencyCount }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

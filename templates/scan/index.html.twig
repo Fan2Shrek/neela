@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'scan.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'scan.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'scan.index.subtitle'|trans({}, null, null, scanCount) }}</p>
+            </div>
+        </header>
+
+        <section class="projects">
+            {% if scans is empty %}
+                <p class="empty-state">{{ 'scan.index.empty_state'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'scan.index.table.project'|trans }}</th>
+                            <th>{{ 'scan.index.table.manifest'|trans }}</th>
+                            <th>{{ 'scan.index.table.status'|trans }}</th>
+                            <th>{{ 'scan.index.table.started_at'|trans }}</th>
+                            <th>{{ 'scan.index.table.completed_at'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in scans %}
+                            <tr>
+                                <td class="projects-table__name">{{ scan.manifest.project.name }}</td>
+                                <td>{{ scan.manifest.path }}</td>
+                                <td>
+                                    <span class="badge badge--{{ scan.status.value }}">{{ scan.status|trans }}</span>
+                                    {% if scan.error %}
+                                        <p class="text-muted">{{ scan.error }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ scan.startedAt ? scan.startedAt|date('d/m/Y H:i') : '—' }}</td>
+                                <td>{{ scan.completedAt ? scan.completedAt|date('d/m/Y H:i') : '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

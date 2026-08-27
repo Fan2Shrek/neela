@@ -5,7 +5,11 @@ common:
 nav:
     dashboard: 'Dashboard'
     projects: 'Projects'
+    manifests: 'Manifests'
     packages: 'Packages'
+    vendors: 'Vendors'
+    dependencies: 'Dependencies'
+    scans: 'Scans'
 
 dashboard:
     title: 'Dashboard'
@@ -51,3 +55,50 @@ package:
             dependency_manager: 'Dependency manager'
             projects: 'Projects'
             dependencies: 'Dependencies'
+
+manifest:
+    index:
+        title: 'Manifests'
+        subtitle: '{0} No manifests discovered yet|{1} One manifest discovered|]1,Inf[ %count% manifests discovered'
+        empty_state: 'No manifests discovered yet.'
+        table:
+            project: 'Project'
+            path: 'Path'
+            dependency_manager: 'Dependency manager'
+            lockfile: 'Lockfile'
+            dependencies: 'Dependencies'
+
+vendor:
+    index:
+        title: 'Vendors'
+        subtitle: '{0} No vendors discovered yet|{1} One vendor discovered|]1,Inf[ %count% vendors discovered'
+        empty_state: 'No vendors discovered yet.'
+        table:
+            vendor: 'Vendor'
+            dependency_manager: 'Dependency manager'
+            packages: 'Packages'
+            projects: 'Projects'
+
+dependency:
+    index:
+        title: 'Dependencies'
+        subtitle: '{0} No dependencies discovered yet|{1} One dependency discovered|]1,Inf[ %count% dependencies discovered'
+        empty_state: 'No dependencies discovered yet.'
+        table:
+            project: 'Project'
+            package: 'Package'
+            constraint: 'Constraint'
+            locked_version: 'Locked version'
+            type: 'Type'
+
+scan:
+    index:
+        title: 'Scans'
+        subtitle: '{0} No scans yet|{1} One scan|]1,Inf[ %count% scans'
+        empty_state: 'No scans yet.'
+        table:
+            project: 'Project'
+            manifest: 'Manifest'
+            status: 'Status'
+            started_at: 'Started at'
+            completed_at: 'Completed at'

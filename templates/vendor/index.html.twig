@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'vendor.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'vendor.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'vendor.index.subtitle'|trans({}, null, null, vendorCount) }}</p>
+            </div>
+        </header>
+
+        <section class="projects">
+            {% if rows is empty %}
+                <p class="empty-state">{{ 'vendor.index.empty_state'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'vendor.index.table.vendor'|trans }}</th>
+                            <th>{{ 'vendor.index.table.dependency_manager'|trans }}</th>
+                            <th>{{ 'vendor.index.table.packages'|trans }}</th>
+                            <th>{{ 'vendor.index.table.projects'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td class="projects-table__name">{{ row.vendor.name }}</td>
+                                <td><span class="badge badge--neutral">{{ row.vendor.dependencyManager.name }}</span></td>
+                                <td>{{ row.packageCount }}</td>
+                                <td>{{ row.projectCount }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

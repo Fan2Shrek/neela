@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'dependency.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'dependency.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'dependency.index.subtitle'|trans({}, null, null, dependencyCount) }}</p>
+            </div>
+        </header>
+
+        <section class="projects">
+            {% if dependencies is empty %}
+                <p class="empty-state">{{ 'dependency.index.empty_state'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'dependency.index.table.project'|trans }}</th>
+                            <th>{{ 'dependency.index.table.package'|trans }}</th>
+                            <th>{{ 'dependency.index.table.constraint'|trans }}</th>
+                            <th>{{ 'dependency.index.table.locked_version'|trans }}</th>
+                            <th>{{ 'dependency.index.table.type'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dependency in dependencies %}
+                            <tr>
+                                <td class="projects-table__name">{{ dependency.manifest.project.name }}</td>
+                                <td>{{ dependency.package.vendor.name }}/{{ dependency.package.name }}</td>
+                                <td>{{ dependency.constraint }}</td>
+                                <td>{{ dependency.lockedVersion }}</td>
+                                <td><span class="badge badge--neutral">{{ dependency.dependencyType }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

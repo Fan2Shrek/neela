@@ -5,7 +5,11 @@ common:
 nav:
     dashboard: 'Dashboard'
     projects: 'Projets'
+    manifests: 'Manifests'
     packages: 'Paquets'
+    vendors: 'Vendors'
+    dependencies: 'Dépendances'
+    scans: 'Scans'
 
 dashboard:
     title: 'Dashboard'
@@ -51,3 +55,50 @@ package:
             dependency_manager: 'Gestionnaire'
             projects: 'Projets'
             dependencies: 'Dépendances'
+
+manifest:
+    index:
+        title: 'Manifests'
+        subtitle: '{0} Aucun manifest découvert|{1} Un manifest découvert|]1,Inf[ %count% manifests découverts'
+        empty_state: 'Aucun manifest découvert pour le moment.'
+        table:
+            project: 'Projet'
+            path: 'Chemin'
+            dependency_manager: 'Gestionnaire'
+            lockfile: 'Lockfile'
+            dependencies: 'Dépendances'
+
+vendor:
+    index:
+        title: 'Vendors'
+        subtitle: '{0} Aucun vendor découvert|{1} Un vendor découvert|]1,Inf[ %count% vendors découverts'
+        empty_state: 'Aucun vendor découvert pour le moment.'
+        table:
+            vendor: 'Vendor'
+            dependency_manager: 'Gestionnaire'
+            packages: 'Paquets'
+            projects: 'Projets'
+
+dependency:
+    index:
+        title: 'Dépendances'
+        subtitle: '{0} Aucune dépendance découverte|{1} Une dépendance découverte|]1,Inf[ %count% dépendances découvertes'
+        empty_state: 'Aucune dépendance découverte pour le moment.'
+        table:
+            project: 'Projet'
+            package: 'Paquet'
+            constraint: 'Contrainte'
+            locked_version: 'Version verrouillée'
+            type: 'Type'
+
+scan:
+    index:
+        title: 'Scans'
+        subtitle: '{0} Aucun scan pour le moment|{1} Un scan|]1,Inf[ %count% scans'
+        empty_state: 'Aucun scan pour le moment.'
+        table:
+            project: 'Projet'
+            manifest: 'Manifest'
+            status: 'Statut'
+            started_at: 'Démarré le'
+            completed_at: 'Terminé le'

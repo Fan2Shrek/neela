@@ -28,4 +28,18 @@ class ScanRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * @return Scan[]
+     */
+    public function findAllWithRelationsOrderedByMostRecent(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->addSelect('m', 'p')
+            ->join('s.manifest', 'm')
+            ->join('m.project', 'p')
+            ->orderBy('s.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

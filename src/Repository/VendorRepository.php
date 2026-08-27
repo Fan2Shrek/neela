@@ -15,4 +15,17 @@ class VendorRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Vendor::class);
     }
+
+    /**
+     * @return Vendor[]
+     */
+    public function findAllWithDependencyManager(): array
+    {
+        return $this->createQueryBuilder('v')
+            ->addSelect('dm')
+            ->join('v.dependencyManager', 'dm')
+            ->orderBy('v.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
