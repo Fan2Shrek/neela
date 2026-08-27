@@ -25,6 +25,7 @@
                             <th>{{ 'project.index.table.project'|trans }}</th>
                             <th>{{ 'project.index.table.dependency_managers'|trans }}</th>
                             <th>{{ 'project.index.table.manifests'|trans }}</th>
+                            <th>{{ 'project.index.table.vulnerabilities'|trans }}</th>
                             <th>{{ 'project.index.table.last_scan'|trans }}</th>
                         </tr>
                     </thead>
@@ -40,6 +41,13 @@
                                     {% endfor %}
                                 </td>
                                 <td>{{ row.manifestCount }}</td>
+                                <td>
+                                    {% if row.vulnerabilityCount > 0 %}
+                                        <span class="badge badge--{{ row.maxVulnerabilitySeverity|default('unknown')|lower }}">{{ row.vulnerabilityCount }} {{ row.maxVulnerabilitySeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if row.lastScan %}
                                         <span class="badge badge--{{ row.lastScan.status.value }}">{{ row.lastScan.status|trans }}</span>

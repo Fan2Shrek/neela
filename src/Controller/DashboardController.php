@@ -62,11 +62,25 @@ final class DashboardController extends AbstractController
 
         usort($projectsNeedingUpdate, static fn (array $a, array $b): int => $severity($a['status']) <=> $severity($b['status']));
 
+        $vulnerabilityExposure = $this->vulnerabilityRepository->countAndMaxSeverityByProject();
+
+        $projectsWithVulnerabilities = array_values(array_filter(array_map(
+            static function (Project $project) use ($vulnerabilityExposure): ?array {
+                $exposure = $vulnerabilityExposure[(string) $project->getId()] ?? null;
+
+                return null === $exposure ? null : ['project' => $project] + $exposure;
+            },
+            $projects,
+        )));
+
+        usort($projectsWithVulnerabilities, static fn (array $a, array $b): int => $b['maxSeverityRank'] <=> $a['maxSeverityRank']);
+
         return $this->render('dashboard/index.html.twig', [
             'projectCount' => \count($projects),
             'scanStatusCounts' => $scanStatusCounts,
             'updateStatusCounts' => $updateStatusCounts,
             'projectsNeedingUpdate' => $projectsNeedingUpdate,
+            'projectsWithVulnerabilities' => $projectsWithVulnerabilities,
             'asyncQueueDepth' => $this->queueDepthProvider->getAsyncQueueDepth(),
             'failedQueueDepth' => $this->queueDepthProvider->getFailedQueueDepth(),
             'vulnerableDependencyCount' => $this->vulnerabilityRepository->countAffectedDependencies(),

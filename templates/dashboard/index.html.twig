@@ -56,6 +56,30 @@
         </section>
 
         <section class="content-section">
+            <h2>{{ 'dashboard.projects_with_vulnerabilities_title'|trans }}</h2>
+            {% if projectsWithVulnerabilities is empty %}
+                <p class="empty-state">{{ 'dashboard.projects_with_vulnerabilities_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'project.index.table.project'|trans }}</th>
+                            <th>{{ 'project.index.table.vulnerabilities'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in projectsWithVulnerabilities %}
+                            <tr>
+                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
+                                <td><span class="badge badge--{{ row.maxSeverity|default('unknown')|lower }}">{{ row.count }} {{ row.maxSeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section class="content-section">
             <h2>{{ 'dashboard.scans_title'|trans }}</h2>
             <div class="stat-tiles">
                 <div class="stat-tile stat-tile--success">

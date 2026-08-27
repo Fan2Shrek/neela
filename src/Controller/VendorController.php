@@ -34,6 +34,9 @@ final class VendorController extends AbstractController
             'projectCount' => $projectCounts[$vendor->getId()] ?? 0,
         ], $vendors);
 
+        // Vendors touching the most projects first — the ones worth knowing about at a glance.
+        usort($rows, static fn (array $a, array $b): int => $b['projectCount'] <=> $a['projectCount']);
+
         return $this->render('vendor/index.html.twig', [
             'rows' => $rows,
             'vendorCount' => \count($vendors),

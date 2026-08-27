@@ -22,6 +22,8 @@ dashboard:
     projects_needing_update_title: 'Projets avec mise à jour disponible'
     projects_needing_update_empty: 'Tous les projets sont à jour.'
     projects_needing_update_status: 'Statut'
+    projects_with_vulnerabilities_title: 'Projets avec vulnérabilités'
+    projects_with_vulnerabilities_empty: 'Aucune vulnérabilité connue sur les projets suivis.'
     scans_title: 'Scans'
     scans_up_to_date: 'scans à jour'
     scans_pending: 'scans en attente'
@@ -66,6 +68,7 @@ project:
             project: 'Projet'
             dependency_managers: 'Gestionnaires'
             manifests: 'Manifests'
+            vulnerabilities: 'Vulnérabilités'
             last_scan: 'Dernier scan'
     discover:
         title: 'Découvrir des dépôts depuis GitHub'

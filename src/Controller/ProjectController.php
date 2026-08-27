@@ -55,8 +55,9 @@ final class ProjectController extends AbstractController
     public function index(): Response
     {
         $projects = $this->projectRepository->findAll();
+        $vulnerabilityExposure = $this->vulnerabilityRepository->countAndMaxSeverityByProject();
 
-        $rows = array_map(function (Project $project): array {
+        $rows = array_map(function (Project $project) use ($vulnerabilityExposure): array {
             $manifests = $this->manifestRepository->findBy(['project' => $project]);
 
             $dependencyManagers = array_unique(array_map(
@@ -64,13 +65,22 @@ final class ProjectController extends AbstractController
                 $manifests,
             ));
 
+            $exposure = $vulnerabilityExposure[(string) $project->getId()] ?? ['count' => 0, 'maxSeverity' => null, 'maxSeverityRank' => -1];
+
             return [
                 'project' => $project,
                 'manifestCount' => \count($manifests),
                 'dependencyManagers' => $dependencyManagers,
                 'lastScan' => $this->scanRepository->findLatestForProject($project),
+                'vulnerabilityCount' => $exposure['count'],
+                'maxVulnerabilitySeverity' => $exposure['maxSeverity'],
+                'maxVulnerabilitySeverityRank' => $exposure['maxSeverityRank'],
             ];
         }, $projects);
+
+        // Most critical exposure first; projects with no known vulnerability keep their
+        // original order (findAll() is name-ordered) since maxSeverityRank stays -1 for all of them.
+        usort($rows, static fn (array $a, array $b): int => $b['maxVulnerabilitySeverityRank'] <=> $a['maxVulnerabilitySeverityRank']);
 
         return $this->render('project/index.html.twig', [
             'rows' => $rows,

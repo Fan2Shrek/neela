@@ -43,7 +43,12 @@ final class PackageController extends AbstractController
             'dependencyCount' => $usage[$package->getId()]['dependencyCount'] ?? 0,
         ], $packages);
 
-        usort($rows, static fn (array $a, array $b): int => $b['dependencyCount'] <=> $a['dependencyCount']) ?: $rows;
+        usort($rows, static function (array $a, array $b): int {
+            $managerComparison = $a['package']->getVendor()->getDependencyManager()->getName()
+                <=> $b['package']->getVendor()->getDependencyManager()->getName();
+
+            return 0 !== $managerComparison ? $managerComparison : $b['dependencyCount'] <=> $a['dependencyCount'];
+        });
 
         if ('' !== $search) {
             $rows = array_values(array_filter(

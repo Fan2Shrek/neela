@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Dependency;
 use App\Entity\TechnologyReleaseCycle;
 use App\Enum\Technology;
+use App\Enum\TechnologySupportStatus;
 use App\Repository\DependencyRepository;
 use App\Repository\PackageRepository;
 use App\Repository\TechnologyReleaseCycleRepository;
@@ -34,7 +35,14 @@ final class TechnologyController extends AbstractController
         // ProjectController's manifest rows for where PHP is actually surfaced today.
         $catalogTechnologies = array_filter(Technology::cases(), static fn (Technology $t): bool => null !== $t->getSignalPackage());
 
-        $rows = array_map(function (Technology $technology): array {
+        $statusRank = static fn (string $status): int => match ($status) {
+            TechnologySupportStatus::END_OF_LIFE->value => 3,
+            TechnologySupportStatus::OUTDATED->value => 2,
+            TechnologySupportStatus::UNKNOWN->value => 1,
+            default => 0,
+        };
+
+        $rows = array_map(function (Technology $technology) use ($statusRank): array {
             $dependencies = $this->findDependencies($technology);
 
             $projectIds = [];
@@ -44,12 +52,19 @@ final class TechnologyController extends AbstractController
                 $statuses[$this->technologySupportEvaluator->evaluate($technology, $dependency->getLockedVersion())->value] = true;
             }
 
+            $statuses = array_keys($statuses);
+
             return [
                 'technology' => $technology,
                 'projectCount' => \count($projectIds),
-                'statuses' => array_keys($statuses),
+                'statuses' => $statuses,
+                'worstStatusRank' => array_reduce($statuses, static fn (int $worst, string $status): int => max($worst, $statusRank($status)), 0),
             ];
         }, $catalogTechnologies);
+
+        // Technologies with the least healthy status (end of life first) surface first;
+        // ties broken by project count, so widely-used technologies still stand out.
+        usort($rows, static fn (array $a, array $b): int => ($b['worstStatusRank'] <=> $a['worstStatusRank']) ?: ($b['projectCount'] <=> $a['projectCount']));
 
         return $this->render('technology/index.html.twig', [
             'rows' => $rows,
