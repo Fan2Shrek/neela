@@ -80,13 +80,8 @@ services:
       MESSENGER_TRANSPORT_DSN: doctrine://default
       # Optionnel : token GitHub par défaut (peut aussi être défini depuis la page Paramètres)
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      # Requis par Caddy/FrankenPHP au démarrage, même si Neela n'utilise pas Mercure lui-même
-      CADDY_MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET}
     ports:
       - "8080:80"
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
     depends_on:
       database:
         condition: service_healthy
@@ -124,8 +119,6 @@ services:
       - database_data:/var/lib/postgresql/data
 
 volumes:
-  caddy_data:
-  caddy_config:
   database_data:
 ```
 
@@ -134,11 +127,10 @@ Puis, à côté de ce `compose.yml`, un fichier `.env` :
 ```dotenv
 POSTGRES_PASSWORD=change-me
 APP_SECRET=generate-a-random-secret
-CADDY_MERCURE_JWT_SECRET=generate-another-random-secret
 # GITHUB_TOKEN=ghp_xxx
 ```
 
-`APP_SECRET` et `CADDY_MERCURE_JWT_SECRET` peuvent être générés avec `openssl rand -hex 32`.
+`APP_SECRET` peut être généré avec `openssl rand -hex 32`.
 
 Démarrage :
 
@@ -149,7 +141,7 @@ docker compose up -d
 Les migrations de base de données s'appliquent automatiquement au démarrage du container `app`. Neela est ensuite accessible sur `http://localhost:8080`.
 
 > [!TIP]
-> Si vous avez un nom de domaine pointant vers votre serveur, mettez `SERVER_NAME=votre-domaine.example.com` et exposez les ports 80/443 : Caddy provisionnera automatiquement un certificat HTTPS via Let's Encrypt.
+> Si vous avez un nom de domaine pointant vers votre serveur, mettez `SERVER_NAME=votre-domaine.example.com`, exposez les ports 80/443 sur le service `app`, et ajoutez deux volumes (`caddy_data:/data`, `caddy_config:/config`) pour que les certificats persistent entre les redémarrages : Caddy provisionnera alors automatiquement du HTTPS via Let's Encrypt.
 
 Une fois démarré, allez dans **Paramètres** pour renseigner votre token d'accès personnel GitHub (nécessaire pour les dépôts privés et pour éviter les limites de taux de l'API GitHub), puis ajoutez un projet depuis **Projets → Nouveau projet**.
 

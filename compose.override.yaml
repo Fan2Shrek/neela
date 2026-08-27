@@ -16,9 +16,9 @@ services:
       #  from the bind-mount for better performance by enabling the next line:
       #- /app/vendor
     environment:
+      # Restarts the worker on file change. Browser-side hot_reload is not used here:
+      # it requires a Mercure hub, which this app has no other use for.
       FRANKENPHP_WORKER_CONFIG: watch
-      FRANKENPHP_SITE_CONFIG: hot_reload
-      MERCURE_EXTRA_DIRECTIVES: demo
       # See https://xdebug.org/docs/all_settings#mode
       XDEBUG_MODE: "${XDEBUG_MODE:-develop}"
       APP_ENV: "${APP_ENV:-dev}"
@@ -26,8 +26,6 @@ services:
       # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
     tty: true
-###> symfony/mercure-bundle ###
-###< symfony/mercure-bundle ###
 
   worker:
     image: ${IMAGES_PREFIX:-}app-php-dev
