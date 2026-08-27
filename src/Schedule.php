@@ -4,6 +4,7 @@ namespace App;
 
 use App\Domain\Command\Project\ScheduledRescanCommand;
 use App\Domain\Command\Scan\DetectStalledScansCommand;
+use App\Domain\Command\Technology\RefreshTechnologySupportCommand;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
@@ -26,6 +27,7 @@ class Schedule implements ScheduleProviderInterface
             ->with(
                 RecurringMessage::every('5 minutes', new DetectStalledScansCommand()),
                 RecurringMessage::every('1 day', new ScheduledRescanCommand()),
+                RecurringMessage::every('1 week', new RefreshTechnologySupportCommand()),
             )
         ;
     }
