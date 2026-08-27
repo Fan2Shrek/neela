@@ -29,6 +29,17 @@ services:
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 
+  worker:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    build:
+      context: .
+      target: frankenphp_dev
+    volumes:
+      - ./:/app
+      - /app/var
+    environment:
+      APP_ENV: "${APP_ENV:-dev}"
+
 ###> doctrine/doctrine-bundle ###
   database:
     ports:

@@ -30,6 +30,18 @@ services:
         published: ${HTTP3_PORT:-443}
         protocol: udp
 
+  worker:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-15}&charset=${POSTGRES_CHARSET:-utf8}
+    # Consumes the async transport, whichever MESSENGER_TRANSPORT_DSN a self-hosted
+    # deployment picks (doctrine, amqp, ...). Bounded lifetime so the worker restarts
+    # periodically instead of accumulating entities across thousands of messages.
+    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M -vv
+    depends_on:
+      database:
+        condition: service_healthy
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
