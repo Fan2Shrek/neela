@@ -73,8 +73,13 @@ project:
         outdated_dependencies_title: 'Outdated dependencies'
         outdated_dependencies_empty: 'No outdated dependencies.'
         outdated_dependencies:
+            filter:
+                all: 'All'
+                production: 'Production'
+                dev: 'Dev'
             table:
                 package: 'Package'
+                type: 'Type'
                 current_version: 'Current version'
                 latest_version: 'Latest version'
                 manifest: 'Manifest'

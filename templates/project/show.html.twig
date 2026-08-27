@@ -33,6 +33,19 @@
 
         <section class="content-section">
             <h2>{{ 'project.show.outdated_dependencies_title'|trans }}</h2>
+
+            <form method="get" class="filter-bar">
+                <select name="dependency_type" class="form-input" onchange="this.form.submit()">
+                    <option value="" {{ dependencyType == '' ? 'selected' : '' }}>{{ 'project.show.outdated_dependencies.filter.all'|trans }}</option>
+                    <option value="require" {{ dependencyType == 'require' ? 'selected' : '' }}>{{ 'project.show.outdated_dependencies.filter.production'|trans }}</option>
+                    <option value="require-dev" {{ dependencyType == 'require-dev' ? 'selected' : '' }}>{{ 'project.show.outdated_dependencies.filter.dev'|trans }}</option>
+                </select>
+                <noscript><button type="submit" class="button button--primary">{{ 'package.index.filters.apply'|trans }}</button></noscript>
+                {% if dependencyType != '' %}
+                    <a href="{{ path('app_project_show', {id: project.id}) }}" class="button button--secondary">{{ 'package.index.filters.clear'|trans }}</a>
+                {% endif %}
+            </form>
+
             {% if outdatedDependencyRows is empty %}
                 <p class="empty-state">{{ 'project.show.outdated_dependencies_empty'|trans }}</p>
             {% else %}
@@ -40,6 +53,7 @@
                     <thead>
                         <tr>
                             <th>{{ 'project.show.outdated_dependencies.table.package'|trans }}</th>
+                            <th>{{ 'project.show.outdated_dependencies.table.type'|trans }}</th>
                             <th>{{ 'project.show.outdated_dependencies.table.current_version'|trans }}</th>
                             <th>{{ 'project.show.outdated_dependencies.table.latest_version'|trans }}</th>
                             <th>{{ 'project.show.outdated_dependencies.table.manifest'|trans }}</th>
@@ -49,6 +63,13 @@
                         {% for row in outdatedDependencyRows %}
                             <tr>
                                 <td class="projects-table__name">{{ row.dependency.package.vendor.name }}/{{ row.dependency.package.name }}</td>
+                                <td>
+                                    {% if row.dependency.dependencyType == 'require-dev' %}
+                                        <span class="badge badge--neutral">{{ 'project.show.outdated_dependencies.filter.dev'|trans }}</span>
+                                    {% else %}
+                                        <span class="badge badge--neutral">{{ 'project.show.outdated_dependencies.filter.production'|trans }}</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ row.dependency.lockedVersion }}</td>
                                 <td><span class="badge badge--outdated">{{ row.latestVersion }}</span></td>
                                 <td>{{ row.dependency.manifest.path }}</td>

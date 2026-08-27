@@ -92,8 +92,9 @@ final class ProjectController extends AbstractController
     }
 
     #[Route('/projects/{id}', name: 'app_project_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
-    public function show(Project $project): Response
+    public function show(Project $project, Request $request): Response
     {
+        $dependencyType = $request->query->get('dependency_type', '');
         $manifests = $this->manifestRepository->findByProjectWithDependencyManager($project);
         $dependencyCounts = $this->dependencyRepository->countByManifest();
         $dependencies = $this->dependencyRepository->findByProjectWithPackage($project);
@@ -129,6 +130,10 @@ final class ProjectController extends AbstractController
             $latestVersion = $this->packageUpdateChecker->findLatestSatisfying($availableVersions, $dependency->getConstraint());
 
             if (null !== $latestVersion && $dependency->getLockedVersion() !== $latestVersion) {
+                if ('' !== $dependencyType && $dependency->getDependencyType() !== $dependencyType) {
+                    continue;
+                }
+
                 $outdatedDependencyRows[] = [
                     'dependency' => $dependency,
                     'latestVersion' => $latestVersion,
@@ -142,6 +147,7 @@ final class ProjectController extends AbstractController
             'manifestCount' => \count($manifests),
             'dependencyCount' => array_sum(array_column($manifestRows, 'dependencyCount')),
             'outdatedDependencyRows' => $outdatedDependencyRows,
+            'dependencyType' => $dependencyType,
             'scans' => $this->scanRepository->findByProjectOrderedByMostRecent($project),
             'lastScan' => $this->scanRepository->findLatestForProject($project),
         ]);
