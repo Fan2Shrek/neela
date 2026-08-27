@@ -32,9 +32,15 @@
     &--failed,
     &--outdated,
     &--end_of_life,
-    &--critical,
     &--high {
         background-color: var(--neela-danger-bg);
         color: var(--neela-danger);
+    }
+
+    // Solid instead of tinted: critical must read as more urgent than high at a glance,
+    // not just "the same red" repeated.
+    &--critical {
+        background-color: var(--neela-danger);
+        color: var(--neela-danger-contrast, #fff);
     }
 }

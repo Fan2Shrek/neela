@@ -14,6 +14,7 @@ nav:
 
 dashboard:
     title: 'Dashboard'
+    critical_alert: '{1} %count% project has critical vulnerabilities — check it now.|]1,Inf[ %count% projects have critical vulnerabilities — check them now.'
     projects_tracked: '{0} No projects tracked|{1} One project tracked|]1,Inf[ %count% projects tracked'
     projects_up_to_date: 'up-to-date projects'
     projects_partially_up_to_date: 'partially up-to-date projects'

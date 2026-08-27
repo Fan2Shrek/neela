@@ -8,6 +8,13 @@
             <h1>{{ 'dashboard.title'|trans }}</h1>
         </header>
 
+        {% if criticalProjectCount > 0 %}
+            <div class="alert-banner">
+                {{ ux_icon('tabler:alert-triangle', {class: 'alert-banner__icon'}) }}
+                <span>{{ 'dashboard.critical_alert'|trans({}, null, null, criticalProjectCount) }}</span>
+            </div>
+        {% endif %}
+
         <section class="stat-tiles">
             <div class="stat-tile">
                 <span class="stat-tile__value">{{ projectCount }}</span>
@@ -32,30 +39,6 @@
         </section>
 
         <section class="content-section">
-            <h2>{{ 'dashboard.projects_needing_update_title'|trans }}</h2>
-            {% if projectsNeedingUpdate is empty %}
-                <p class="empty-state">{{ 'dashboard.projects_needing_update_empty'|trans }}</p>
-            {% else %}
-                <table class="projects-table">
-                    <thead>
-                        <tr>
-                            <th>{{ 'project.index.table.project'|trans }}</th>
-                            <th>{{ 'dashboard.projects_needing_update_status'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in projectsNeedingUpdate %}
-                            <tr>
-                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
-                                <td><span class="badge badge--{{ row.status.value }}">{{ ('project_update_status.' ~ row.status.value)|trans }}</span></td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
-        </section>
-
-        <section class="content-section">
             <h2>{{ 'dashboard.projects_with_vulnerabilities_title'|trans }}</h2>
             {% if projectsWithVulnerabilities is empty %}
                 <p class="empty-state">{{ 'dashboard.projects_with_vulnerabilities_empty'|trans }}</p>
@@ -72,6 +55,30 @@
                             <tr>
                                 <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
                                 <td><span class="badge badge--{{ row.maxSeverity|default('unknown')|lower }}">{{ row.count }} {{ row.maxSeverity|default('project.show.vulnerabilities.severity_unknown'|trans) }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'dashboard.projects_needing_update_title'|trans }}</h2>
+            {% if projectsNeedingUpdate is empty %}
+                <p class="empty-state">{{ 'dashboard.projects_needing_update_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'project.index.table.project'|trans }}</th>
+                            <th>{{ 'dashboard.projects_needing_update_status'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in projectsNeedingUpdate %}
+                            <tr>
+                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.project.id}) }}">{{ row.project.name }}</a></td>
+                                <td><span class="badge badge--{{ row.status.value }}">{{ ('project_update_status.' ~ row.status.value)|trans }}</span></td>
                             </tr>
                         {% endfor %}
                     </tbody>

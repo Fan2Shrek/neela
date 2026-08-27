@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Project;
+use App\Entity\Vulnerability;
 use App\Enum\ProjectUpdateStatus;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
@@ -73,7 +74,17 @@ final class DashboardController extends AbstractController
             $projects,
         )));
 
-        usort($projectsWithVulnerabilities, static fn (array $a, array $b): int => $b['maxSeverityRank'] <=> $a['maxSeverityRank']);
+        // Most critical exposure first; within the same severity, the project with the
+        // most affected dependencies is the more urgent one to look at.
+        usort(
+            $projectsWithVulnerabilities,
+            static fn (array $a, array $b): int => ($b['maxSeverityRank'] <=> $a['maxSeverityRank']) ?: ($b['count'] <=> $a['count']),
+        );
+
+        $criticalProjectCount = \count(array_filter(
+            $projectsWithVulnerabilities,
+            static fn (array $row): bool => Vulnerability::CRITICAL_SEVERITY_RANK === $row['maxSeverityRank'],
+        ));
 
         return $this->render('dashboard/index.html.twig', [
             'projectCount' => \count($projects),
@@ -81,6 +92,7 @@ final class DashboardController extends AbstractController
             'updateStatusCounts' => $updateStatusCounts,
             'projectsNeedingUpdate' => $projectsNeedingUpdate,
             'projectsWithVulnerabilities' => $projectsWithVulnerabilities,
+            'criticalProjectCount' => $criticalProjectCount,
             'asyncQueueDepth' => $this->queueDepthProvider->getAsyncQueueDepth(),
             'failedQueueDepth' => $this->queueDepthProvider->getFailedQueueDepth(),
             'vulnerableDependencyCount' => $this->vulnerabilityRepository->countAffectedDependencies(),
