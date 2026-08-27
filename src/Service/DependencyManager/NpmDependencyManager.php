@@ -71,6 +71,13 @@ final class NpmDependencyManager implements DependencyManagerInterface
         return $dependencies;
     }
 
+    public function getRuntimeConstraint(string $manifestContent): ?string
+    {
+        // package.json's "engines.node" isn't read yet — Node.js detection is a phase-2
+        // technology, per the project's technologies/runtimes doc.
+        return null;
+    }
+
     /**
      * @return array<string, string>
      */

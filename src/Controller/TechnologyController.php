@@ -28,6 +28,12 @@ final class TechnologyController extends AbstractController
     #[Route('/technologies', name: 'app_technology_index', methods: ['GET'])]
     public function index(): Response
     {
+        // Package-signal-based technologies only for now: PHP (and other future runtimes)
+        // are detected from a manifest's own platform requirement, not a dependency, and
+        // aren't wired into this dependency-driven catalog yet — see ManifestScanner and
+        // ProjectController's manifest rows for where PHP is actually surfaced today.
+        $catalogTechnologies = array_filter(Technology::cases(), static fn (Technology $t): bool => null !== $t->getSignalPackage());
+
         $rows = array_map(function (Technology $technology): array {
             $dependencies = $this->findDependencies($technology);
 
@@ -43,7 +49,7 @@ final class TechnologyController extends AbstractController
                 'projectCount' => \count($projectIds),
                 'statuses' => array_keys($statuses),
             ];
-        }, Technology::cases());
+        }, $catalogTechnologies);
 
         return $this->render('technology/index.html.twig', [
             'rows' => $rows,
@@ -83,7 +89,13 @@ final class TechnologyController extends AbstractController
      */
     private function findDependencies(Technology $technology): array
     {
-        [$vendorName, $packageName] = $technology->getSignalPackage();
+        $signalPackage = $technology->getSignalPackage();
+
+        if (null === $signalPackage) {
+            return [];
+        }
+
+        [$vendorName, $packageName] = $signalPackage;
         $package = $this->packageRepository->findOneByVendorAndName($vendorName, $packageName);
 
         return null !== $package ? $this->dependencyRepository->findByPackageWithProject($package) : [];

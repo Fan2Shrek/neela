@@ -8,10 +8,12 @@ use App\Domain\Command\Project\ImportProjectCommand;
 use App\Domain\Command\Project\RescanProjectCommand;
 use App\Entity\Dependency;
 use App\Entity\Manifest;
+use App\Entity\ManifestTechnology;
 use App\Entity\Project;
 use App\Form\ProjectType;
 use App\Repository\DependencyRepository;
 use App\Repository\ManifestRepository;
+use App\Repository\ManifestTechnologyRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
 use App\Repository\VersionRepository;
@@ -33,6 +35,7 @@ final class ProjectController extends AbstractController
     public function __construct(
         private readonly ProjectRepository $projectRepository,
         private readonly ManifestRepository $manifestRepository,
+        private readonly ManifestTechnologyRepository $manifestTechnologyRepository,
         private readonly ScanRepository $scanRepository,
         private readonly DependencyRepository $dependencyRepository,
         private readonly VersionRepository $versionRepository,
@@ -106,8 +109,16 @@ final class ProjectController extends AbstractController
             $dependenciesByManifestId[$dependency->getManifest()->getId()][] = $dependency;
         }
 
-        $manifestRows = array_map(function (Manifest $manifest) use ($dependencyCounts, $dependenciesByManifestId): array {
+        $manifestTechnologiesByManifestId = $this->manifestTechnologyRepository->findAllIndexedByManifestId();
+
+        $manifestRows = array_map(function (Manifest $manifest) use ($dependencyCounts, $dependenciesByManifestId, $manifestTechnologiesByManifestId): array {
             $detected = $this->technologyDetector->detect($dependenciesByManifestId[$manifest->getId()] ?? []);
+
+            $runtimes = array_map(fn (ManifestTechnology $manifestTechnology): array => [
+                'technology' => $manifestTechnology->getTechnology(),
+                'version' => $manifestTechnology->getVersion(),
+                'supportStatus' => $this->technologySupportEvaluator->evaluate($manifestTechnology->getTechnology(), $manifestTechnology->getVersion()),
+            ], $manifestTechnologiesByManifestId[$manifest->getId()] ?? []);
 
             return [
                 'manifest' => $manifest,
@@ -117,6 +128,7 @@ final class ProjectController extends AbstractController
                 'technologySupportStatus' => $detected instanceof DetectedTechnology
                     ? $this->technologySupportEvaluator->evaluate($detected->technology, $detected->dependency->getLockedVersion())
                     : null,
+                'runtimes' => $runtimes,
             ];
         }, $manifests);
 

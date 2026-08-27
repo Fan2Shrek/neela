@@ -8,9 +8,12 @@ use App\Domain\Command\Dependency\CheckDependencyVulnerabilitiesCommand;
 use App\Domain\Command\Package\GetPackageVersionCommand;
 use App\Entity\Dependency;
 use App\Entity\Manifest;
+use App\Entity\ManifestTechnology;
 use App\Entity\Package;
 use App\Entity\Vendor;
+use App\Enum\Technology;
 use App\Repository\DependencyRepository;
+use App\Repository\ManifestTechnologyRepository;
 use App\Repository\PackageRepository;
 use App\Repository\VendorRepository;
 use App\Service\DependencyManager\DependencyManagerResolver;
@@ -26,6 +29,7 @@ final class ManifestScanner implements ManifestScannerInterface
         private readonly VendorRepository $vendorRepository,
         private readonly PackageRepository $packageRepository,
         private readonly DependencyRepository $dependencyRepository,
+        private readonly ManifestTechnologyRepository $manifestTechnologyRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly MessageBusInterface $bus,
     ) {
@@ -50,6 +54,8 @@ final class ManifestScanner implements ManifestScannerInterface
         }
 
         $definition = $this->dependencyManagerResolver->resolve($manifest->getDependencyManager()->getName());
+
+        $this->recordRuntimeConstraint($manifest, $definition->getRuntimeConstraint($manifestContent));
 
         /** @var array<string, Vendor> $vendorCache */
         $vendorCache = [];
@@ -91,6 +97,26 @@ final class ManifestScanner implements ManifestScannerInterface
 
         foreach ($dependencies as $dependency) {
             $this->bus->dispatch(new CheckDependencyVulnerabilitiesCommand($dependency->getId()));
+        }
+    }
+
+    /**
+     * The only runtime constraint any ecosystem declares today is Composer's require.php,
+     * so this is hardcoded to PHP; once a second one exists (e.g. npm's engines.node), the
+     * dependency manager will need to say which Technology its constraint maps to.
+     */
+    private function recordRuntimeConstraint(Manifest $manifest, ?string $constraint): void
+    {
+        if (null === $constraint) {
+            return;
+        }
+
+        $manifestTechnology = $this->manifestTechnologyRepository->findOneByManifestAndTechnology($manifest, Technology::PHP);
+
+        if (null === $manifestTechnology) {
+            $this->entityManager->persist(new ManifestTechnology($manifest, Technology::PHP, $constraint, $manifest->getPath()));
+        } else {
+            $manifestTechnology->setVersion($constraint);
         }
     }
 

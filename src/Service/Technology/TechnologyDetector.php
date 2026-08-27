@@ -18,7 +18,13 @@ final class TechnologyDetector
     public function detect(array $dependencies): ?DetectedTechnology
     {
         foreach (Technology::cases() as $technology) {
-            [$vendor, $name] = $technology->getSignalPackage();
+            $signalPackage = $technology->getSignalPackage();
+
+            if (null === $signalPackage) {
+                continue;
+            }
+
+            [$vendor, $name] = $signalPackage;
 
             foreach ($dependencies as $dependency) {
                 $package = $dependency->getPackage();

@@ -78,6 +78,13 @@ final class NpmDependencyManagerTest extends TestCase
         self::assertNull($dependencies[0]->lockedVersion);
     }
 
+    public function testGetRuntimeConstraintIsNotReadYet(): void
+    {
+        $manifest = json_encode(['dependencies' => ['lodash' => '^4.17.21'], 'engines' => ['node' => '>=20']]);
+
+        self::assertNull($this->npm()->getRuntimeConstraint($manifest));
+    }
+
     private function npm(): NpmDependencyManager
     {
         return new NpmDependencyManager($this->createStub(PackageRegistryInterface::class));

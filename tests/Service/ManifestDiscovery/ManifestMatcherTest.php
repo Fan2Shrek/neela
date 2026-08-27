@@ -146,6 +146,11 @@ final class ManifestMatcherTest extends TestCase
             {
                 return null;
             }
+
+            public function getRuntimeConstraint(string $manifestContent): ?string
+            {
+                return null;
+            }
         };
 
         $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager($this->createStub(PackageRegistryInterface::class)), $cargo]);

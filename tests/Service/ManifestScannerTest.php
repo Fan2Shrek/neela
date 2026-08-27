@@ -9,10 +9,13 @@ use App\Domain\Command\Package\GetPackageVersionCommand;
 use App\Entity\Dependency;
 use App\Entity\DependencyManager;
 use App\Entity\Manifest;
+use App\Entity\ManifestTechnology;
 use App\Entity\Package;
 use App\Entity\Project;
 use App\Entity\Vendor;
+use App\Enum\Technology;
 use App\Repository\DependencyRepository;
+use App\Repository\ManifestTechnologyRepository;
 use App\Repository\PackageRepository;
 use App\Repository\VendorRepository;
 use App\Service\DependencyManager\ComposerDependencyManager;
@@ -171,6 +174,75 @@ final class ManifestScannerTest extends TestCase
         self::assertSame(123, $dispatched[1]->dependencyId);
     }
 
+    public function testScanRecordsPhpsRequireConstraintAsAManifestTechnology(): void
+    {
+        $manifest = new Manifest($this->project(), new DependencyManager('Composer'), 'composer.json', 'composer.lock');
+
+        $manifestJson = json_encode(['require' => ['php' => '^8.3', 'symfony/console' => '^6.4']]);
+        $lockJson = json_encode(['packages' => [['name' => 'symfony/console', 'version' => 'v6.4.18']]]);
+
+        $vcs = $this->stubVcs($manifestJson, $lockJson);
+
+        $vendorRepository = $this->createStub(VendorRepository::class);
+        $vendorRepository->method('findOneBy')->willReturn(null);
+        $packageRepository = $this->createStub(PackageRepository::class);
+        $packageRepository->method('findOneBy')->willReturn(null);
+        $dependencyRepository = $this->createStub(DependencyRepository::class);
+        $dependencyRepository->method('findOneBy')->willReturn(null);
+
+        $manifestTechnologyRepository = $this->createStub(ManifestTechnologyRepository::class);
+        $manifestTechnologyRepository->method('findOneByManifestAndTechnology')->willReturn(null);
+
+        $persisted = [];
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('persist')->willReturnCallback(function (object $entity) use (&$persisted): void {
+            $persisted[] = $entity;
+
+            if ($entity instanceof Package) {
+                (new \ReflectionProperty(Package::class, 'id'))->setValue($entity, 1);
+            } elseif ($entity instanceof Dependency) {
+                (new \ReflectionProperty(Dependency::class, 'id'))->setValue($entity, 1);
+            }
+        });
+
+        $bus = $this->createStub(MessageBusInterface::class);
+        $bus->method('dispatch')->willReturnCallback(static fn (object $command): Envelope => new Envelope($command));
+
+        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus, $manifestTechnologyRepository);
+
+        $scanner->scan($manifest);
+
+        $manifestTechnologies = array_values(array_filter($persisted, static fn (object $e): bool => $e instanceof ManifestTechnology));
+
+        self::assertCount(1, $manifestTechnologies);
+        self::assertSame(Technology::PHP, $manifestTechnologies[0]->getTechnology());
+        self::assertSame('^8.3', $manifestTechnologies[0]->getVersion());
+        self::assertSame('composer.json', $manifestTechnologies[0]->getSource());
+    }
+
+    public function testScanUpdatesAnExistingManifestTechnologyInstead(): void
+    {
+        $manifest = new Manifest($this->project(), new DependencyManager('Composer'), 'composer.json', 'composer.lock');
+
+        $manifestJson = json_encode(['require' => ['php' => '^8.4']]);
+        $lockJson = json_encode(['packages' => []]);
+
+        $vcs = $this->stubVcs($manifestJson, $lockJson);
+
+        $existing = new ManifestTechnology($manifest, Technology::PHP, '^8.3', 'composer.json');
+        $manifestTechnologyRepository = $this->createStub(ManifestTechnologyRepository::class);
+        $manifestTechnologyRepository->method('findOneByManifestAndTechnology')->willReturn($existing);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::never())->method('persist');
+
+        $scanner = $this->scanner($vcs, entityManager: $entityManager, manifestTechnologyRepository: $manifestTechnologyRepository);
+
+        $scanner->scan($manifest);
+
+        self::assertSame('^8.4', $existing->getVersion());
+    }
+
     private function project(): Project
     {
         return new Project('my-project', 'git@github.com:acme/my-project.git');
@@ -214,6 +286,7 @@ final class ManifestScannerTest extends TestCase
         ?DependencyRepository $dependencyRepository = null,
         ?EntityManagerInterface $entityManager = null,
         ?MessageBusInterface $bus = null,
+        ?ManifestTechnologyRepository $manifestTechnologyRepository = null,
     ): ManifestScanner {
         return new ManifestScanner(
             new VCSResolver([$vcs]),
@@ -221,6 +294,7 @@ final class ManifestScannerTest extends TestCase
             $vendorRepository ?? $this->createStub(VendorRepository::class),
             $packageRepository ?? $this->createStub(PackageRepository::class),
             $dependencyRepository ?? $this->createStub(DependencyRepository::class),
+            $manifestTechnologyRepository ?? $this->createStub(ManifestTechnologyRepository::class),
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
             $bus ?? $this->createStub(MessageBusInterface::class),
         );

@@ -74,6 +74,20 @@ final class ComposerDependencyManagerTest extends TestCase
         self::assertNull($dependencies[0]->lockedVersion);
     }
 
+    public function testGetRuntimeConstraintReadsRequirePhp(): void
+    {
+        $manifest = json_encode(['require' => ['php' => '^8.3', 'symfony/console' => '^6.4']]);
+
+        self::assertSame('^8.3', $this->composerDependencyManager()->getRuntimeConstraint($manifest));
+    }
+
+    public function testGetRuntimeConstraintIsNullWithoutARequirePhpEntry(): void
+    {
+        $manifest = json_encode(['require' => ['symfony/console' => '^6.4']]);
+
+        self::assertNull($this->composerDependencyManager()->getRuntimeConstraint($manifest));
+    }
+
     private function composerDependencyManager(): ComposerDependencyManager
     {
         return new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class));

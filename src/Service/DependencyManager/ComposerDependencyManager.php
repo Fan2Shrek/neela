@@ -74,6 +74,13 @@ final class ComposerDependencyManager implements DependencyManagerInterface
         return $dependencies;
     }
 
+    public function getRuntimeConstraint(string $manifestContent): ?string
+    {
+        $manifest = json_decode($manifestContent, true, flags: \JSON_THROW_ON_ERROR);
+
+        return $manifest['require']['php'] ?? null;
+    }
+
     /**
      * @return array<string, string>
      */

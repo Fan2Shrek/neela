@@ -34,4 +34,11 @@ interface DependencyManagerInterface
      * (e.g. Packagist for Composer). Null when not implemented yet.
      */
     public function getRegistry(): ?PackageRegistryInterface;
+
+    /**
+     * The runtime version constraint this manifest declares for itself (e.g. Composer's
+     * require.php), if any. Null when this manifest has none, or this ecosystem doesn't
+     * declare one at all yet (npm's package.json "engines.node" isn't read yet).
+     */
+    public function getRuntimeConstraint(string $manifestContent): ?string;
 }
