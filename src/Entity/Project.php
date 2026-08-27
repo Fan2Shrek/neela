@@ -21,12 +21,12 @@ class Project
     private string $name;
 
     #[ORM\Column(length: 255)]
-    private string $gitLink;
+    private string $sshLink;
 
     public function __construct(string $name, string $gitLink)
     {
         $this->name = $name;
-        $this->gitLink = $gitLink;
+        $this->sshLink = $gitLink;
     }
 
     public function getId(): Uuid
@@ -46,14 +46,14 @@ class Project
         return $this;
     }
 
-    public function getGitLink(): string
+    public function getSshLink(): string
     {
-        return $this->gitLink;
+        return $this->sshLink;
     }
 
-    public function setGitLink(string $gitLink): static
+    public function setSshLink(string $sshLink): static
     {
-        $this->gitLink = $gitLink;
+        $this->sshLink = $sshLink;
 
         return $this;
     }
