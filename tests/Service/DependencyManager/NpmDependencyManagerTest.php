@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\DependencyManager;
 
+use App\Enum\Technology;
 use App\Service\DependencyManager\NpmDependencyManager;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use PHPUnit\Framework\TestCase;
@@ -78,11 +79,23 @@ final class NpmDependencyManagerTest extends TestCase
         self::assertNull($dependencies[0]->lockedVersion);
     }
 
-    public function testGetRuntimeConstraintIsNotReadYet(): void
+    public function testGetRuntimeConstraintReadsEnginesNode(): void
     {
         $manifest = json_encode(['dependencies' => ['lodash' => '^4.17.21'], 'engines' => ['node' => '>=20']]);
 
+        self::assertSame('>=20', $this->npm()->getRuntimeConstraint($manifest));
+    }
+
+    public function testGetRuntimeConstraintIsNullWithoutAnEnginesNodeEntry(): void
+    {
+        $manifest = json_encode(['dependencies' => ['lodash' => '^4.17.21']]);
+
         self::assertNull($this->npm()->getRuntimeConstraint($manifest));
+    }
+
+    public function testGetRuntimeTechnologyIsNode(): void
+    {
+        self::assertSame(Technology::NODE, $this->npm()->getRuntimeTechnology());
     }
 
     private function npm(): NpmDependencyManager

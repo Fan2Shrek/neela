@@ -20,6 +20,7 @@ use App\Repository\PackageRepository;
 use App\Repository\VendorRepository;
 use App\Service\DependencyManager\ComposerDependencyManager;
 use App\Service\DependencyManager\DependencyManagerResolver;
+use App\Service\DependencyManager\NpmDependencyManager;
 use App\Service\ManifestScanner;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\VCS\GitTree;
@@ -220,6 +221,52 @@ final class ManifestScannerTest extends TestCase
         self::assertSame('composer.json', $manifestTechnologies[0]->getSource());
     }
 
+    public function testScanRecordsNodesEnginesConstraintAsAManifestTechnology(): void
+    {
+        $manifest = new Manifest($this->project(), new DependencyManager('npm'), 'package.json', 'package-lock.json');
+
+        $manifestJson = json_encode(['dependencies' => ['lodash' => '^4.17.21'], 'engines' => ['node' => '>=20']]);
+        $lockJson = json_encode(['packages' => ['node_modules/lodash' => ['version' => '4.17.21']]]);
+
+        $vcs = $this->stubVcs($manifestJson, $lockJson);
+
+        $vendorRepository = $this->createStub(VendorRepository::class);
+        $vendorRepository->method('findOneBy')->willReturn(null);
+        $packageRepository = $this->createStub(PackageRepository::class);
+        $packageRepository->method('findOneBy')->willReturn(null);
+        $dependencyRepository = $this->createStub(DependencyRepository::class);
+        $dependencyRepository->method('findOneBy')->willReturn(null);
+
+        $manifestTechnologyRepository = $this->createStub(ManifestTechnologyRepository::class);
+        $manifestTechnologyRepository->method('findOneByManifestAndTechnology')->willReturn(null);
+
+        $persisted = [];
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('persist')->willReturnCallback(function (object $entity) use (&$persisted): void {
+            $persisted[] = $entity;
+
+            if ($entity instanceof Package) {
+                (new \ReflectionProperty(Package::class, 'id'))->setValue($entity, 1);
+            } elseif ($entity instanceof Dependency) {
+                (new \ReflectionProperty(Dependency::class, 'id'))->setValue($entity, 1);
+            }
+        });
+
+        $bus = $this->createStub(MessageBusInterface::class);
+        $bus->method('dispatch')->willReturnCallback(static fn (object $command): Envelope => new Envelope($command));
+
+        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus, $manifestTechnologyRepository);
+
+        $scanner->scan($manifest);
+
+        $manifestTechnologies = array_values(array_filter($persisted, static fn (object $e): bool => $e instanceof ManifestTechnology));
+
+        self::assertCount(1, $manifestTechnologies);
+        self::assertSame(Technology::NODE, $manifestTechnologies[0]->getTechnology());
+        self::assertSame('>=20', $manifestTechnologies[0]->getVersion());
+        self::assertSame('package.json', $manifestTechnologies[0]->getSource());
+    }
+
     public function testScanUpdatesAnExistingManifestTechnologyInstead(): void
     {
         $manifest = new Manifest($this->project(), new DependencyManager('Composer'), 'composer.json', 'composer.lock');
@@ -274,7 +321,8 @@ final class ManifestScannerTest extends TestCase
 
             public function getFileContent(string $sshLink, string $path): ?string
             {
-                return str_ends_with($path, '.lock') ? $this->lockContent : $this->manifestContent;
+                // "lock" also matches npm's package-lock.json, not just composer.lock.
+                return str_contains($path, 'lock') ? $this->lockContent : $this->manifestContent;
             }
         };
     }
@@ -290,7 +338,10 @@ final class ManifestScannerTest extends TestCase
     ): ManifestScanner {
         return new ManifestScanner(
             new VCSResolver([$vcs]),
-            new DependencyManagerResolver([new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class))]),
+            new DependencyManagerResolver([
+                new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class)),
+                new NpmDependencyManager($this->createStub(PackageRegistryInterface::class)),
+            ]),
             $vendorRepository ?? $this->createStub(VendorRepository::class),
             $packageRepository ?? $this->createStub(PackageRepository::class),
             $dependencyRepository ?? $this->createStub(DependencyRepository::class),

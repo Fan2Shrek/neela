@@ -55,7 +55,11 @@ final class ManifestScanner implements ManifestScannerInterface
 
         $definition = $this->dependencyManagerResolver->resolve($manifest->getDependencyManager()->getName());
 
-        $this->recordRuntimeConstraint($manifest, $definition->getRuntimeConstraint($manifestContent));
+        $runtimeTechnology = $definition->getRuntimeTechnology();
+
+        if (null !== $runtimeTechnology) {
+            $this->recordRuntimeConstraint($manifest, $runtimeTechnology, $definition->getRuntimeConstraint($manifestContent));
+        }
 
         /** @var array<string, Vendor> $vendorCache */
         $vendorCache = [];
@@ -100,21 +104,16 @@ final class ManifestScanner implements ManifestScannerInterface
         }
     }
 
-    /**
-     * The only runtime constraint any ecosystem declares today is Composer's require.php,
-     * so this is hardcoded to PHP; once a second one exists (e.g. npm's engines.node), the
-     * dependency manager will need to say which Technology its constraint maps to.
-     */
-    private function recordRuntimeConstraint(Manifest $manifest, ?string $constraint): void
+    private function recordRuntimeConstraint(Manifest $manifest, Technology $technology, ?string $constraint): void
     {
         if (null === $constraint) {
             return;
         }
 
-        $manifestTechnology = $this->manifestTechnologyRepository->findOneByManifestAndTechnology($manifest, Technology::PHP);
+        $manifestTechnology = $this->manifestTechnologyRepository->findOneByManifestAndTechnology($manifest, $technology);
 
         if (null === $manifestTechnology) {
-            $this->entityManager->persist(new ManifestTechnology($manifest, Technology::PHP, $constraint, $manifest->getPath()));
+            $this->entityManager->persist(new ManifestTechnology($manifest, $technology, $constraint, $manifest->getPath()));
         } else {
             $manifestTechnology->setVersion($constraint);
         }

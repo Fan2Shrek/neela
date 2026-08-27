@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Enum\Technology;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\PackageRegistry\PackagistClient;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -79,6 +80,11 @@ final class ComposerDependencyManager implements DependencyManagerInterface
         $manifest = json_decode($manifestContent, true, flags: \JSON_THROW_ON_ERROR);
 
         return $manifest['require']['php'] ?? null;
+    }
+
+    public function getRuntimeTechnology(): ?Technology
+    {
+        return Technology::PHP;
     }
 
     /**

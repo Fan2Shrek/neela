@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\DependencyManager;
 
+use App\Enum\Technology;
 use App\Service\DependencyManager\ComposerDependencyManager;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use PHPUnit\Framework\TestCase;
@@ -86,6 +87,11 @@ final class ComposerDependencyManagerTest extends TestCase
         $manifest = json_encode(['require' => ['symfony/console' => '^6.4']]);
 
         self::assertNull($this->composerDependencyManager()->getRuntimeConstraint($manifest));
+    }
+
+    public function testGetRuntimeTechnologyIsPhp(): void
+    {
+        self::assertSame(Technology::PHP, $this->composerDependencyManager()->getRuntimeTechnology());
     }
 
     private function composerDependencyManager(): ComposerDependencyManager

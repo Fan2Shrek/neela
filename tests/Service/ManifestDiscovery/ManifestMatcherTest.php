@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\ManifestDiscovery;
 
+use App\Enum\Technology;
 use App\Service\DependencyManager\ComposerDependencyManager;
 use App\Service\DependencyManager\DependencyManagerInterface;
 use App\Service\DependencyManager\NpmDependencyManager;
@@ -148,6 +149,11 @@ final class ManifestMatcherTest extends TestCase
             }
 
             public function getRuntimeConstraint(string $manifestContent): ?string
+            {
+                return null;
+            }
+
+            public function getRuntimeTechnology(): ?Technology
             {
                 return null;
             }

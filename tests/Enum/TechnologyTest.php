@@ -29,6 +29,9 @@ final class TechnologyTest extends TestCase
         yield 'php greater-or-equal constraint' => [Technology::PHP, '>=8.1', '8.1'];
         yield 'php compound constraint keeps the first alternative' => [Technology::PHP, '>=8.1 <9', '8.1'];
         yield 'php tilde constraint with patch segment' => [Technology::PHP, '~8.2.0', '8.2'];
+        yield 'node caret constraint keeps major only' => [Technology::NODE, '^20.11', '20'];
+        yield 'node greater-or-equal constraint' => [Technology::NODE, '>=20', '20'];
+        yield 'node bare major.minor.patch' => [Technology::NODE, '20.11.1', '20'];
     }
 
     public function testSignalPackages(): void
@@ -39,16 +42,18 @@ final class TechnologyTest extends TestCase
         self::assertSame(['vue', 'vue'], Technology::VUE->getSignalPackage());
     }
 
-    public function testPhpHasNoSignalPackageSinceItIsNotADependency(): void
+    public function testRuntimesHaveNoSignalPackageSinceTheyAreNotADependency(): void
     {
         self::assertNull(Technology::PHP->getSignalPackage());
+        self::assertNull(Technology::NODE->getSignalPackage());
     }
 
-    public function testOnlyComposerTechnologiesHaveAnEndOfLifeProduct(): void
+    public function testEndOfLifeProductSlugs(): void
     {
         self::assertSame('symfony', Technology::SYMFONY->getEndOfLifeProductSlug());
         self::assertSame('laravel', Technology::LARAVEL->getEndOfLifeProductSlug());
         self::assertSame('php', Technology::PHP->getEndOfLifeProductSlug());
+        self::assertSame('nodejs', Technology::NODE->getEndOfLifeProductSlug());
         self::assertNull(Technology::REACT->getEndOfLifeProductSlug());
         self::assertNull(Technology::VUE->getEndOfLifeProductSlug());
     }

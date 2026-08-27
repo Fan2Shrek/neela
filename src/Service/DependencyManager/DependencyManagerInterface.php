@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Enum\Technology;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
@@ -37,8 +38,12 @@ interface DependencyManagerInterface
 
     /**
      * The runtime version constraint this manifest declares for itself (e.g. Composer's
-     * require.php), if any. Null when this manifest has none, or this ecosystem doesn't
-     * declare one at all yet (npm's package.json "engines.node" isn't read yet).
+     * require.php, npm's engines.node), if any. Null when this manifest has none.
      */
     public function getRuntimeConstraint(string $manifestContent): ?string;
+
+    /**
+     * Which Technology getRuntimeConstraint()'s value maps to, if this ecosystem has one.
+     */
+    public function getRuntimeTechnology(): ?Technology;
 }

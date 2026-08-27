@@ -97,9 +97,10 @@ final class RefreshTechnologySupportHandlerTest extends TestCase
         $handler(new RefreshTechnologySupportCommand());
 
         // Every technology except Symfony (which fails above) has an EOL product today
-        // (Laravel, PHP) and the stub returns the same cycle for either of them.
-        self::assertCount(2, $persisted);
+        // (Laravel, PHP, Node) and the stub returns the same cycle for each of them.
+        self::assertCount(3, $persisted);
         self::assertSame('12', $persisted[0]->getCycle());
         self::assertSame('12', $persisted[1]->getCycle());
+        self::assertSame('12', $persisted[2]->getCycle());
     }
 }

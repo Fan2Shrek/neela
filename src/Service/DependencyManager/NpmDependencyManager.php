@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Enum\Technology;
 use App\Service\PackageRegistry\NpmRegistryClient;
 use App\Service\PackageRegistry\PackageRegistryInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -73,9 +74,14 @@ final class NpmDependencyManager implements DependencyManagerInterface
 
     public function getRuntimeConstraint(string $manifestContent): ?string
     {
-        // package.json's "engines.node" isn't read yet — Node.js detection is a phase-2
-        // technology, per the project's technologies/runtimes doc.
-        return null;
+        $manifest = json_decode($manifestContent, true, flags: \JSON_THROW_ON_ERROR);
+
+        return $manifest['engines']['node'] ?? null;
+    }
+
+    public function getRuntimeTechnology(): ?Technology
+    {
+        return Technology::NODE;
     }
 
     /**
