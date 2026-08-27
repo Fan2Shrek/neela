@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use App\Entity\Scan;
+use App\Enum\ScanStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -54,6 +55,20 @@ class ScanRepository extends ServiceEntityRepository
             ->join('s.manifest', 'm')
             ->join('m.project', 'p')
             ->orderBy('s.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Scan[]
+     */
+    public function findStalledInProgress(\DateTimeImmutable $startedBefore): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.status = :status')
+            ->andWhere('s.startedAt < :startedBefore')
+            ->setParameter('status', ScanStatus::IN_PROGRESS)
+            ->setParameter('startedBefore', $startedBefore)
             ->getQuery()
             ->getResult();
     }

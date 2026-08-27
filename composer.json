@@ -26,6 +26,7 @@
         "symfony/messenger": "8.1.*",
         "symfony/monolog-bundle": "^4.0",
         "symfony/runtime": "8.1.*",
+        "symfony/scheduler": "8.1.*",
         "symfony/security-csrf": "8.1.*",
         "symfony/stimulus-bundle": "^3.4",
         "symfony/translation": "8.1.*",
