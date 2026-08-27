@@ -77,6 +77,18 @@ final class PackageController extends AbstractController
         ]);
     }
 
+    #[Route('/packages/autocomplete', name: 'app_package_autocomplete', methods: ['GET'])]
+    public function autocomplete(Request $request): Response
+    {
+        $query = trim((string) $request->query->get('query', ''));
+
+        $names = '' === $query ? [] : $this->packageRepository->findFullNamesMatching($query);
+
+        return $this->json([
+            'results' => array_map(static fn (string $name): array => ['value' => $name, 'text' => $name], $names),
+        ]);
+    }
+
     #[Route('/packages/{id}', name: 'app_package_show', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function show(Package $package): Response
     {

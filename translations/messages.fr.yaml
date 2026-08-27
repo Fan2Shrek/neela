@@ -65,6 +65,10 @@ project:
         discover_from_github: 'Découvrir depuis GitHub'
         empty_state: 'Aucun projet suivi pour le moment.'
         never_scanned: 'Jamais scanné'
+        filters:
+            search_placeholder: 'Rechercher par nom de projet…'
+            all_update_statuses: 'Tous les statuts'
+            no_results: 'Aucun projet ne correspond à tes filtres.'
         table:
             project: 'Projet'
             dependency_managers: 'Gestionnaires'

@@ -10,7 +10,9 @@ use App\Entity\Dependency;
 use App\Entity\Manifest;
 use App\Entity\ManifestTechnology;
 use App\Entity\Project;
+use App\Entity\Vulnerability;
 use App\Form\ProjectType;
+use App\Repository\DependencyManagerRepository;
 use App\Repository\DependencyRepository;
 use App\Repository\ManifestRepository;
 use App\Repository\ManifestTechnologyRepository;
@@ -19,6 +21,7 @@ use App\Repository\ScanRepository;
 use App\Repository\VersionRepository;
 use App\Repository\VulnerabilityRepository;
 use App\Service\Package\PackageUpdateChecker;
+use App\Service\Project\ProjectUpdateStatusCalculator;
 use App\Service\Technology\DetectedTechnology;
 use App\Service\Technology\TechnologyDetector;
 use App\Service\Technology\TechnologySupportEvaluator;
@@ -42,9 +45,11 @@ final class ProjectController extends AbstractController
         private readonly DependencyRepository $dependencyRepository,
         private readonly VersionRepository $versionRepository,
         private readonly VulnerabilityRepository $vulnerabilityRepository,
+        private readonly DependencyManagerRepository $dependencyManagerRepository,
         private readonly PackageUpdateChecker $packageUpdateChecker,
         private readonly TechnologyDetector $technologyDetector,
         private readonly TechnologySupportEvaluator $technologySupportEvaluator,
+        private readonly ProjectUpdateStatusCalculator $projectUpdateStatusCalculator,
         private readonly MessageBusInterface $bus,
         private readonly TranslatorInterface $translator,
         private readonly RepositoryDiscoveryInterface $repositoryDiscovery,
@@ -52,12 +57,17 @@ final class ProjectController extends AbstractController
     }
 
     #[Route('/projects', name: 'app_project_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $projects = $this->projectRepository->findAll();
-        $vulnerabilityExposure = $this->vulnerabilityRepository->countAndMaxSeverityByProject();
+        $search = trim((string) $request->query->get('search', ''));
+        $dependencyManagerName = trim((string) $request->query->get('dependency_manager', ''));
+        $updateStatusFilter = trim((string) $request->query->get('update_status', ''));
 
-        $rows = array_map(function (Project $project) use ($vulnerabilityExposure): array {
+        $projects = $this->projectRepository->findAll();
+        $vulnerabilityExposure = $this->vulnerabilityRepository->severityBreakdownByProject();
+        $updateStatuses = $this->projectUpdateStatusCalculator->calculate();
+
+        $rows = array_map(function (Project $project) use ($vulnerabilityExposure, $updateStatuses): array {
             $manifests = $this->manifestRepository->findBy(['project' => $project]);
 
             $dependencyManagers = array_unique(array_map(
@@ -65,26 +75,67 @@ final class ProjectController extends AbstractController
                 $manifests,
             ));
 
-            $exposure = $vulnerabilityExposure[(string) $project->getId()] ?? ['count' => 0, 'maxSeverity' => null, 'maxSeverityRank' => -1];
+            $exposure = $vulnerabilityExposure[(string) $project->getId()] ?? ['total' => 0, 'bySeverity' => [], 'maxSeverityRank' => -1];
 
             return [
                 'project' => $project,
                 'manifestCount' => \count($manifests),
                 'dependencyManagers' => $dependencyManagers,
                 'lastScan' => $this->scanRepository->findLatestForProject($project),
-                'vulnerabilityCount' => $exposure['count'],
-                'maxVulnerabilitySeverity' => $exposure['maxSeverity'],
+                'vulnerabilityCount' => $exposure['total'],
+                'maxVulnerabilitySeverity' => $exposure['maxSeverityRank'] >= 0 ? Vulnerability::labelForRank($exposure['maxSeverityRank']) : null,
                 'maxVulnerabilitySeverityRank' => $exposure['maxSeverityRank'],
+                'updateStatus' => $updateStatuses[(string) $project->getId()] ?? null,
             ];
         }, $projects);
+
+        if ('' !== $search) {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => false !== stripos($row['project']->getName(), $search),
+            ));
+        }
+
+        if ('' !== $dependencyManagerName) {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => \in_array($dependencyManagerName, $row['dependencyManagers'], true),
+            ));
+        }
+
+        if ('' !== $updateStatusFilter) {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => $row['updateStatus']?->value === $updateStatusFilter,
+            ));
+        }
 
         // Most critical exposure first; projects with no known vulnerability keep their
         // original order (findAll() is name-ordered) since maxSeverityRank stays -1 for all of them.
         usort($rows, static fn (array $a, array $b): int => $b['maxVulnerabilitySeverityRank'] <=> $a['maxVulnerabilitySeverityRank']);
 
+        $isFiltered = '' !== $search || '' !== $dependencyManagerName || '' !== $updateStatusFilter;
+
         return $this->render('project/index.html.twig', [
             'rows' => $rows,
             'projectCount' => \count($projects),
+            'search' => $search,
+            'dependencyManagerName' => $dependencyManagerName,
+            'updateStatusFilter' => $updateStatusFilter,
+            'dependencyManagers' => $this->dependencyManagerRepository->findAll(),
+            'isFiltered' => $isFiltered,
+        ]);
+    }
+
+    #[Route('/projects/autocomplete', name: 'app_project_autocomplete', methods: ['GET'])]
+    public function autocomplete(Request $request): Response
+    {
+        $query = trim((string) $request->query->get('query', ''));
+
+        $names = $query === '' ? [] : $this->projectRepository->findNamesMatching($query);
+
+        return $this->json([
+            'results' => array_map(static fn (string $name): array => ['value' => $name, 'text' => $name], $names),
         ]);
     }
 

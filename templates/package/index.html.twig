@@ -18,6 +18,10 @@
                 value="{{ search }}"
                 placeholder="{{ 'package.index.filters.search_placeholder'|trans }}"
                 class="form-input"
+                data-controller="symfony--ux-autocomplete--autocomplete"
+                data-symfony--ux-autocomplete--autocomplete-url-value="{{ path('app_package_autocomplete') }}"
+                data-symfony--ux-autocomplete--autocomplete-min-characters-value="1"
+                data-symfony--ux-autocomplete--autocomplete-no-results-found-text-value="{{ 'package.index.filters.no_results'|trans }}"
             >
             <select name="dependency_manager" class="form-input">
                 <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>

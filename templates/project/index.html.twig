@@ -15,9 +15,39 @@
             </div>
         </header>
 
+        <form method="get" class="filter-bar">
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                placeholder="{{ 'project.index.filters.search_placeholder'|trans }}"
+                class="form-input"
+                data-controller="symfony--ux-autocomplete--autocomplete"
+                data-symfony--ux-autocomplete--autocomplete-url-value="{{ path('app_project_autocomplete') }}"
+                data-symfony--ux-autocomplete--autocomplete-min-characters-value="1"
+                data-symfony--ux-autocomplete--autocomplete-no-results-found-text-value="{{ 'project.index.filters.no_results'|trans }}"
+            >
+            <select name="dependency_manager" class="form-input">
+                <option value="">{{ 'package.index.filters.all_dependency_managers'|trans }}</option>
+                {% for dependencyManager in dependencyManagers %}
+                    <option value="{{ dependencyManager.name }}" {{ dependencyManager.name == dependencyManagerName ? 'selected' : '' }}>{{ dependencyManager.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="update_status" class="form-input">
+                <option value="">{{ 'project.index.filters.all_update_statuses'|trans }}</option>
+                {% for status in ['up_to_date', 'partially_up_to_date', 'outdated'] %}
+                    <option value="{{ status }}" {{ status == updateStatusFilter ? 'selected' : '' }}>{{ ('project_update_status.' ~ status)|trans }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="button button--primary">{{ 'package.index.filters.apply'|trans }}</button>
+            {% if isFiltered %}
+                <a href="{{ path('app_project_index') }}" class="button button--secondary">{{ 'package.index.filters.clear'|trans }}</a>
+            {% endif %}
+        </form>
+
         <section class="projects">
             {% if rows is empty %}
-                <p class="empty-state">{{ 'project.index.empty_state'|trans }}</p>
+                <p class="empty-state">{{ (isFiltered ? 'project.index.filters.no_results' : 'project.index.empty_state')|trans }}</p>
             {% else %}
                 <table class="projects-table">
                     <thead>
