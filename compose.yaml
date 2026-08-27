@@ -61,6 +61,11 @@ services:
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
+  rabbitmq:
+    image: rabbitmq:4.3.5-management
+    ports:
+      - "15672:15672"
+
 volumes:
   caddy_data:
   caddy_config:

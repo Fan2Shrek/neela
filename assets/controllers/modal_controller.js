@@ -24,7 +24,12 @@ export default class extends Controller {
     async load(url) {
         const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
 
-        this.contentTarget.innerHTML = new DOMParser().parseFromString(html, 'text/html').body.innerHTML;
+        // Pages render inside the sidebar layout's <main class="app__content">; grabbing
+        // <body> as a whole would pull the sidebar into the modal along with it.
+        const content = doc.querySelector('.app__content');
+
+        this.contentTarget.innerHTML = (content ?? doc.body).innerHTML;
     }
 }

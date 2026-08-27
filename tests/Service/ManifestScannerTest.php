@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Domain\Command\Package\GetPackageVersionCommand;
 use App\Entity\Dependency;
 use App\Entity\DependencyManager;
 use App\Entity\Manifest;
@@ -14,13 +15,17 @@ use App\Repository\DependencyRepository;
 use App\Repository\PackageRepository;
 use App\Repository\VendorRepository;
 use App\Service\DependencyManager\ComposerDependencyManager;
+use App\Service\DependencyManager\DependencyManagerResolver;
 use App\Service\ManifestScanner;
+use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\VCSInterface;
 use App\Service\VCS\VCSProject;
 use App\Service\VCS\VCSResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 final class ManifestScannerTest extends TestCase
 {
@@ -74,9 +79,21 @@ final class ManifestScannerTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('persist')->willReturnCallback(function (object $entity) use (&$persisted): void {
             $persisted[] = $entity;
+
+            if ($entity instanceof Package) {
+                // Simulate Doctrine assigning the auto-generated id on persist.
+                $property = new \ReflectionProperty(Package::class, 'id');
+                $property->setValue($entity, 42);
+            }
         });
 
-        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager);
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (GetPackageVersionCommand $command) => 42 === $command->packageId))
+            ->willReturn(new Envelope(new \stdClass()));
+
+        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus);
 
         $scanner->scan($manifest);
 
@@ -106,6 +123,7 @@ final class ManifestScannerTest extends TestCase
         $vendorRepository->method('findOneBy')->willReturn($vendor);
 
         $package = new Package('console', $vendor);
+        (new \ReflectionProperty(Package::class, 'id'))->setValue($package, 7);
         $packageRepository = $this->createStub(PackageRepository::class);
         $packageRepository->method('findOneBy')->willReturn($package);
 
@@ -116,7 +134,13 @@ final class ManifestScannerTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('persist');
 
-        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager);
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (GetPackageVersionCommand $command) => 7 === $command->packageId))
+            ->willReturn(new Envelope(new \stdClass()));
+
+        $scanner = $this->scanner($vcs, $vendorRepository, $packageRepository, $dependencyRepository, $entityManager, $bus);
 
         $scanner->scan($manifest);
 
@@ -166,14 +190,16 @@ final class ManifestScannerTest extends TestCase
         ?PackageRepository $packageRepository = null,
         ?DependencyRepository $dependencyRepository = null,
         ?EntityManagerInterface $entityManager = null,
+        ?MessageBusInterface $bus = null,
     ): ManifestScanner {
         return new ManifestScanner(
             new VCSResolver([$vcs]),
-            [new ComposerDependencyManager()],
+            new DependencyManagerResolver([new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class))]),
             $vendorRepository ?? $this->createStub(VendorRepository::class),
             $packageRepository ?? $this->createStub(PackageRepository::class),
             $dependencyRepository ?? $this->createStub(DependencyRepository::class),
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
+            $bus ?? $this->createStub(MessageBusInterface::class),
         );
     }
 }

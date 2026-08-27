@@ -9,6 +9,7 @@ use App\Service\DependencyManager\DependencyManagerInterface;
 use App\Service\DependencyManager\NpmDependencyManager;
 use App\Service\ManifestDiscovery\DiscoveredManifest;
 use App\Service\ManifestDiscovery\ManifestMatcher;
+use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +18,7 @@ final class ManifestMatcherTest extends TestCase
 {
     public function testComposerManifestAtRoot(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer()]);
 
         $discovered = $matcher->match($this->tree(['composer.json']));
 
@@ -29,7 +30,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testRepositoryWithoutManifest(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer()]);
 
         $discovered = $matcher->match($this->tree(['README.md', 'src/App.php']));
 
@@ -38,7 +39,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testMultipleComposerManifests(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer()]);
 
         $discovered = $matcher->match($this->tree([
             'composer.json',
@@ -54,7 +55,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testComposerAndNpmInSameRepository(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager(), new NpmDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager()]);
 
         $discovered = $matcher->match($this->tree([
             'app/back/composer.json',
@@ -69,7 +70,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testManifestWithLockfile(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer()]);
 
         $discovered = $matcher->match($this->tree(['app/back/composer.json', 'app/back/composer.lock']));
 
@@ -79,7 +80,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testManifestWithoutLockfile(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer()]);
 
         $discovered = $matcher->match($this->tree(['app/back/composer.json']));
 
@@ -89,7 +90,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testManifestsInSubdirectories(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager(), new NpmDependencyManager()]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager()]);
 
         $discovered = $matcher->match($this->tree([
             'frontend/package.json',
@@ -101,7 +102,7 @@ final class ManifestMatcherTest extends TestCase
 
     public function testExcludedDirectoriesAreIgnored(): void
     {
-        $matcher = new ManifestMatcher([new ComposerDependencyManager()], ['.git', 'vendor', 'node_modules']);
+        $matcher = new ManifestMatcher([$this->composer()], ['.git', 'vendor', 'node_modules']);
 
         $discovered = $matcher->match($this->tree([
             'composer.json',
@@ -140,9 +141,14 @@ final class ManifestMatcherTest extends TestCase
             {
                 return [];
             }
+
+            public function getRegistry(): ?PackageRegistryInterface
+            {
+                return null;
+            }
         };
 
-        $matcher = new ManifestMatcher([new ComposerDependencyManager(), new NpmDependencyManager(), $cargo]);
+        $matcher = new ManifestMatcher([$this->composer(), new NpmDependencyManager(), $cargo]);
 
         $discovered = $matcher->match($this->tree([
             'composer.json',
@@ -156,6 +162,11 @@ final class ManifestMatcherTest extends TestCase
         self::assertSame('Composer', $names['composer.json']);
         self::assertSame('npm', $names['frontend/package.json']);
         self::assertSame('Cargo', $names['engine/Cargo.toml']);
+    }
+
+    private function composer(): ComposerDependencyManager
+    {
+        return new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class));
     }
 
     private function tree(array $paths): GitTree

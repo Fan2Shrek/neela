@@ -27,7 +27,7 @@ class Version
     private ?\DateTimeImmutable $releasedAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $requiresPhp = null;
+    private ?string $runtimeConstraint = null;
 
     public function __construct(Package $package, string $version, string $normalizedVersion)
     {
@@ -89,14 +89,14 @@ class Version
         return $this;
     }
 
-    public function getRequiresPhp(): ?string
+    public function getRuntimeConstraint(): ?string
     {
-        return $this->requiresPhp;
+        return $this->runtimeConstraint;
     }
 
-    public function setRequiresPhp(?string $requiresPhp): static
+    public function setRuntimeConstraint(?string $runtimeConstraint): static
     {
-        $this->requiresPhp = $requiresPhp;
+        $this->runtimeConstraint = $runtimeConstraint;
 
         return $this;
     }

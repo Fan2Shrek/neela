@@ -48,4 +48,22 @@ class PackageRepository extends ServiceEntityRepository
 
         return $counts;
     }
+
+    /**
+     * Lazily streams package ids from the database instead of hydrating every
+     * Package entity into memory at once (as findAll() would).
+     *
+     * @return iterable<int>
+     */
+    public function iterateAllIds(): iterable
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.id')
+            ->getQuery()
+            ->toIterable();
+
+        foreach ($rows as $row) {
+            yield $row['id'];
+        }
+    }
 }

@@ -1,22 +1,25 @@
 framework:
     messenger:
-        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-        # failure_transport: failed
+        failure_transport: failed
 
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
-            # async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            # failed: 'doctrine://default?queue_name=failed'
-            sync: 'sync://'
+            # Self-hosted deployments pick their own transport via MESSENGER_TRANSPORT_DSN
+            # (doctrine:// by default so no extra infra is required; amqp:// for RabbitMQ, etc.)
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            failed: 'doctrine://default?queue_name=failed'
 
         routing:
-            # Route your messages to the transports
-            # 'App\Message\YourMessage': async
+            # Every command in this app is dispatched async; nothing runs sync.
+            App\Domain\Command\Project\ImportProjectCommand: async
+            App\Domain\Command\Manifest\ScanManifestDependenciesCommand: async
+            App\Domain\Command\Package\FetchAllPackageCommand: async
+            App\Domain\Command\Package\GetPackageVersionCommand: async
 
-# when@test:
-#    framework:
-#        messenger:
-#            transports:
-#                # replace with your transport name here (e.g., my_transport: 'in-memory://')
-#                # For more Messenger testing tools, see https://github.com/zenstruck/messenger-test
-#                async: 'in-memory://'
+when@test:
+    framework:
+        messenger:
+            transports:
+                # For more Messenger testing tools, see https://github.com/zenstruck/messenger-test
+                async: 'in-memory://'
+                failed: 'in-memory://'

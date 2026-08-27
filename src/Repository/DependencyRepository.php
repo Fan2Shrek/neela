@@ -78,22 +78,4 @@ class DependencyRepository extends ServiceEntityRepository
 
         return $counts;
     }
-
-    /**
-     * @return Dependency[]
-     */
-    public function findAllWithRelations(): array
-    {
-        return $this->createQueryBuilder('d')
-            ->addSelect('m', 'p', 'pkg', 'v')
-            ->join('d.manifest', 'm')
-            ->join('m.project', 'p')
-            ->join('d.package', 'pkg')
-            ->join('pkg.vendor', 'v')
-            ->orderBy('p.name', 'ASC')
-            ->addOrderBy('v.name', 'ASC')
-            ->addOrderBy('pkg.name', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
 }

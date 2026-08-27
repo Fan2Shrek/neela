@@ -13,6 +13,7 @@ use App\Service\DependencyManager\NpmDependencyManager;
 use App\Service\ManifestDiscovery\Exception\TruncatedTreeException;
 use App\Service\ManifestDiscovery\ManifestDiscoveryService;
 use App\Service\ManifestDiscovery\ManifestMatcher;
+use App\Service\PackageRegistry\PackageRegistryInterface;
 use App\Service\VCS\GitTree;
 use App\Service\VCS\GitTreeEntry;
 use App\Service\VCS\VCSInterface;
@@ -37,7 +38,7 @@ final class ManifestDiscoveryServiceTest extends TestCase
 
         $service = new ManifestDiscoveryService(
             $vcsResolver,
-            new ManifestMatcher([new ComposerDependencyManager()]),
+            new ManifestMatcher([$this->composer()]),
             $this->createStub(DependencyManagerRepository::class),
             $manifestRepository,
             $entityManager,
@@ -74,7 +75,7 @@ final class ManifestDiscoveryServiceTest extends TestCase
 
         $service = new ManifestDiscoveryService(
             $vcsResolver,
-            new ManifestMatcher([new ComposerDependencyManager(), new NpmDependencyManager()]),
+            new ManifestMatcher([$this->composer(), new NpmDependencyManager()]),
             $dependencyManagerRepository,
             $manifestRepository,
             $entityManager,
@@ -93,6 +94,11 @@ final class ManifestDiscoveryServiceTest extends TestCase
         self::assertSame($composerManager, $byPath['app/back/composer.json']->getDependencyManager());
         self::assertNull($byPath['app/front/package.json']->getLockPath());
         self::assertSame('npm', $byPath['app/front/package.json']->getDependencyManager()->getName());
+    }
+
+    private function composer(): ComposerDependencyManager
+    {
+        return new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class));
     }
 
     private function stubVcs(GitTree $tree): VCSInterface

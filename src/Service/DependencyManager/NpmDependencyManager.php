@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Service\PackageRegistry\PackageRegistryInterface;
+
 final class NpmDependencyManager implements DependencyManagerInterface
 {
     public function getName(): string
@@ -24,6 +26,12 @@ final class NpmDependencyManager implements DependencyManagerInterface
     public function supports(string $projectPath): bool
     {
         return \in_array(basename($projectPath), $this->getManifestFilenames(), true);
+    }
+
+    public function getRegistry(): ?PackageRegistryInterface
+    {
+        // No npm registry client yet.
+        return null;
     }
 
     public function getDependencies(string $manifestContent, ?string $lockContent): array

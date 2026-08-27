@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace App\Service\DependencyManager;
 
+use App\Service\PackageRegistry\PackageRegistryInterface;
+
 final class ComposerDependencyManager implements DependencyManagerInterface
 {
+    public function __construct(
+        private readonly PackageRegistryInterface $registry,
+    ) {
+    }
+
     public function getName(): string
     {
         return 'Composer';
@@ -24,6 +31,11 @@ final class ComposerDependencyManager implements DependencyManagerInterface
     public function supports(string $projectPath): bool
     {
         return \in_array(basename($projectPath), $this->getManifestFilenames(), true);
+    }
+
+    public function getRegistry(): ?PackageRegistryInterface
+    {
+        return $this->registry;
     }
 
     public function getDependencies(string $manifestContent, ?string $lockContent): array

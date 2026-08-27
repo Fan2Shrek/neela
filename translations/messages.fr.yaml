@@ -8,7 +8,6 @@ nav:
     manifests: 'Manifests'
     packages: 'Paquets'
     vendors: 'Vendors'
-    dependencies: 'Dépendances'
     scans: 'Scans'
 
 dashboard:
@@ -78,18 +77,6 @@ vendor:
             dependency_manager: 'Gestionnaire'
             packages: 'Paquets'
             projects: 'Projets'
-
-dependency:
-    index:
-        title: 'Dépendances'
-        subtitle: '{0} Aucune dépendance découverte|{1} Une dépendance découverte|]1,Inf[ %count% dépendances découvertes'
-        empty_state: 'Aucune dépendance découverte pour le moment.'
-        table:
-            project: 'Projet'
-            package: 'Paquet'
-            constraint: 'Contrainte'
-            locked_version: 'Version verrouillée'
-            type: 'Type'
 
 scan:
     index:

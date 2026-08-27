@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\DependencyManager;
 
 use App\Service\DependencyManager\ComposerDependencyManager;
+use App\Service\PackageRegistry\PackageRegistryInterface;
 use PHPUnit\Framework\TestCase;
 
 final class ComposerDependencyManagerTest extends TestCase
@@ -30,7 +31,7 @@ final class ComposerDependencyManagerTest extends TestCase
             ],
         ]);
 
-        $dependencies = (new ComposerDependencyManager())->getDependencies($manifest, $lock);
+        $dependencies = $this->composerDependencyManager()->getDependencies($manifest, $lock);
 
         self::assertCount(2, $dependencies);
 
@@ -57,7 +58,7 @@ final class ComposerDependencyManagerTest extends TestCase
             ],
         ]);
 
-        $dependencies = (new ComposerDependencyManager())->getDependencies($manifest, null);
+        $dependencies = $this->composerDependencyManager()->getDependencies($manifest, null);
 
         self::assertCount(1, $dependencies);
         self::assertSame('console', $dependencies[0]->name);
@@ -67,9 +68,14 @@ final class ComposerDependencyManagerTest extends TestCase
     {
         $manifest = json_encode(['require' => ['symfony/console' => '^6.4']]);
 
-        $dependencies = (new ComposerDependencyManager())->getDependencies($manifest, null);
+        $dependencies = $this->composerDependencyManager()->getDependencies($manifest, null);
 
         self::assertCount(1, $dependencies);
         self::assertNull($dependencies[0]->lockedVersion);
+    }
+
+    private function composerDependencyManager(): ComposerDependencyManager
+    {
+        return new ComposerDependencyManager($this->createStub(PackageRegistryInterface::class));
     }
 }
