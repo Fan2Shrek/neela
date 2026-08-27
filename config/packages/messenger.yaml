@@ -12,6 +12,7 @@ framework:
         routing:
             # Every command in this app is dispatched async; nothing runs sync.
             App\Domain\Command\Project\ImportProjectCommand: async
+            App\Domain\Command\Project\RescanProjectCommand: async
             App\Domain\Command\Manifest\ScanManifestDependenciesCommand: async
             App\Domain\Command\Package\FetchAllPackageCommand: async
             App\Domain\Command\Package\GetPackageVersionCommand: async

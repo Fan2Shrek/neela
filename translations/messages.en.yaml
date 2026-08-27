@@ -24,6 +24,9 @@ dashboard:
     scans_up_to_date: 'up-to-date scans'
     scans_pending: 'pending scans'
     scans_failed: 'failed scans'
+    background_tasks_title: 'Background tasks'
+    background_tasks_pending: 'tasks queued'
+    background_tasks_failed: 'failed tasks'
 
 scan_status:
     pending: 'Pending'
@@ -63,6 +66,9 @@ project:
             last_scan: 'Last scan'
     show:
         back_to_projects: 'Back to projects'
+        rescan:
+            button: 'Rerun a scan'
+            queued: 'The scan has been queued.'
         outdated_dependencies_title: 'Outdated dependencies'
         outdated_dependencies_empty: 'No outdated dependencies.'
         outdated_dependencies:

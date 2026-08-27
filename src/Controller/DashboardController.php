@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Enum\ProjectUpdateStatus;
 use App\Repository\ProjectRepository;
 use App\Repository\ScanRepository;
+use App\Service\Messenger\QueueDepthProvider;
 use App\Service\Project\ProjectUpdateStatusCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ final class DashboardController extends AbstractController
         private readonly ProjectRepository $projectRepository,
         private readonly ScanRepository $scanRepository,
         private readonly ProjectUpdateStatusCalculator $projectUpdateStatusCalculator,
+        private readonly QueueDepthProvider $queueDepthProvider,
     ) {
     }
 
@@ -63,6 +65,8 @@ final class DashboardController extends AbstractController
             'scanStatusCounts' => $scanStatusCounts,
             'updateStatusCounts' => $updateStatusCounts,
             'projectsNeedingUpdate' => $projectsNeedingUpdate,
+            'asyncQueueDepth' => $this->queueDepthProvider->getAsyncQueueDepth(),
+            'failedQueueDepth' => $this->queueDepthProvider->getFailedQueueDepth(),
         ]);
     }
 }

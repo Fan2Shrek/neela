@@ -10,6 +10,10 @@
                 <h1>{{ project.name }}</h1>
                 <p class="dashboard__subtitle">{{ project.sshLink }}</p>
             </div>
+            <form method="post" action="{{ path('app_project_rescan', {id: project.id}) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('rescan_project') }}">
+                <button type="submit" class="button button--primary">{{ 'project.show.rescan.button'|trans }}</button>
+            </form>
         </header>
 
         <section class="stat-tiles">

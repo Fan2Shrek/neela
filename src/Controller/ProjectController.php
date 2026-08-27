@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Domain\Command\Project\ImportProjectCommand;
+use App\Domain\Command\Project\RescanProjectCommand;
 use App\Entity\Dependency;
 use App\Entity\Manifest;
 use App\Entity\Project;
@@ -144,5 +145,19 @@ final class ProjectController extends AbstractController
             'scans' => $this->scanRepository->findByProjectOrderedByMostRecent($project),
             'lastScan' => $this->scanRepository->findLatestForProject($project),
         ]);
+    }
+
+    #[Route('/projects/{id}/rescan', name: 'app_project_rescan', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    public function rescan(Project $project, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('rescan_project', $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $this->bus->dispatch(new RescanProjectCommand((string) $project->getId()));
+
+        $this->addFlash('success', $this->translator->trans('project.show.rescan.queued'));
+
+        return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
     }
 }

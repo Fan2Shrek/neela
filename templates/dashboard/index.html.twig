@@ -68,5 +68,19 @@
                 </div>
             </div>
         </section>
+
+        <section class="content-section">
+            <h2>{{ 'dashboard.background_tasks_title'|trans }}</h2>
+            <div class="stat-tiles">
+                <div class="stat-tile">
+                    <span class="stat-tile__value">{{ asyncQueueDepth ?? '—' }}</span>
+                    <span class="stat-tile__label">{{ 'dashboard.background_tasks_pending'|trans }}</span>
+                </div>
+                <div class="stat-tile stat-tile--danger">
+                    <span class="stat-tile__value">{{ failedQueueDepth ?? '—' }}</span>
+                    <span class="stat-tile__label">{{ 'dashboard.background_tasks_failed'|trans }}</span>
+                </div>
+            </div>
+        </section>
     </div>
 {% endblock %}

@@ -24,6 +24,9 @@ dashboard:
     scans_up_to_date: 'scans à jour'
     scans_pending: 'scans en attente'
     scans_failed: 'scans en erreur'
+    background_tasks_title: 'Tâches en arrière-plan'
+    background_tasks_pending: 'tâches en file d''attente'
+    background_tasks_failed: 'tâches en erreur'
 
 scan_status:
     pending: 'En attente'
@@ -63,6 +66,9 @@ project:
             last_scan: 'Dernier scan'
     show:
         back_to_projects: 'Retour aux projets'
+        rescan:
+            button: 'Relancer un scan'
+            queued: 'Le scan a été mis en file d''attente.'
         outdated_dependencies_title: 'Dépendances obsolètes'
         outdated_dependencies_empty: 'Aucune dépendance obsolète.'
         outdated_dependencies:

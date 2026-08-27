@@ -1,0 +1,10 @@
+<div class="toasts" data-controller="toast" aria-live="polite">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="toast toast--{{ label }}" data-toast-target="item" role="status">
+                <span class="toast__message">{{ message }}</span>
+                <button type="button" class="toast__close" data-action="toast#dismiss" aria-label="{{ 'common.close'|trans }}">&times;</button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>
