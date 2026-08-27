@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ technology.getLabel() }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <a class="text-muted" href="{{ path('app_technology_index') }}">&larr; {{ 'technology.show.back_to_technologies'|trans }}</a>
+                <h1>{{ technology.getLabel() }}</h1>
+            </div>
+        </header>
+
+        <section class="stat-tiles">
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ projectCount }}</span>
+                <span class="stat-tile__label">{{ 'technology.show.stats.projects'|trans }}</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ rows|length }}</span>
+                <span class="stat-tile__label">{{ 'technology.show.stats.dependencies'|trans }}</span>
+            </div>
+        </section>
+
+        {% if cycles is not empty %}
+            <section class="content-section">
+                <h2>{{ 'technology.show.release_cycles_title'|trans }}</h2>
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'technology.show.cycles_table.cycle'|trans }}</th>
+                            <th>{{ 'technology.show.cycles_table.latest_version'|trans }}</th>
+                            <th>{{ 'technology.show.cycles_table.lts'|trans }}</th>
+                            <th>{{ 'technology.show.cycles_table.release_date'|trans }}</th>
+                            <th>{{ 'technology.show.cycles_table.end_of_life'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cycle in cycles %}
+                            <tr>
+                                <td class="projects-table__name">{{ cycle.cycle }}</td>
+                                <td>{{ cycle.latestVersion }}</td>
+                                <td>
+                                    {% if cycle.lts %}
+                                        <span class="badge badge--lts">LTS</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ cycle.releaseDate ? cycle.releaseDate|date('d/m/Y') : '—' }}</td>
+                                <td>{{ cycle.eolDate ? cycle.eolDate|date('d/m/Y') : '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        {% endif %}
+
+        <section class="content-section">
+            <h2>{{ 'technology.show.projects_title'|trans }}</h2>
+            {% if rows is empty %}
+                <p class="empty-state">{{ 'technology.show.projects_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'technology.show.table.project'|trans }}</th>
+                            <th>{{ 'technology.show.table.manifest'|trans }}</th>
+                            <th>{{ 'technology.show.table.version'|trans }}</th>
+                            <th>{{ 'technology.show.table.status'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.dependency.manifest.project.id}) }}">{{ row.dependency.manifest.project.name }}</a></td>
+                                <td>{{ row.dependency.manifest.path }}</td>
+                                <td>{{ row.dependency.lockedVersion }}</td>
+                                <td><span class="badge badge--{{ row.status.value }}">{{ ('technology_support_status.' ~ row.status.value)|trans }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

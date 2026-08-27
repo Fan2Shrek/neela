@@ -47,7 +47,7 @@
                     <tbody>
                         {% for row in rows %}
                             <tr>
-                                <td class="projects-table__name">{{ row.package.vendor.name }}/{{ row.package.name }}</td>
+                                <td class="projects-table__name"><a href="{{ path('app_package_show', {id: row.package.id}) }}">{{ row.package.vendor.name }}/{{ row.package.name }}</a></td>
                                 <td><span class="badge badge--neutral">{{ row.package.vendor.dependencyManager.name }}</span></td>
                                 <td>{{ row.projectCount }}</td>
                                 <td>{{ row.dependencyCount }}</td>

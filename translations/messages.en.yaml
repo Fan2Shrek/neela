@@ -6,6 +6,7 @@ nav:
     dashboard: 'Dashboard'
     projects: 'Projects'
     manifests: 'Manifests'
+    technologies: 'Technologies'
     packages: 'Packages'
     vendors: 'Vendors'
     scans: 'Scans'
@@ -100,6 +101,25 @@ package:
             dependency_manager: 'Dependency manager'
             projects: 'Projects'
             dependencies: 'Dependencies'
+    show:
+        back_to_packages: 'Back to packages'
+        projects_title: 'Projects using this package'
+        projects_empty: 'No project depends on this package.'
+        stats:
+            projects: 'Projects'
+            dependencies: 'Dependencies'
+            latest_version: 'Latest known version'
+        table:
+            project: 'Project'
+            manifest: 'Manifest'
+            constraint: 'Constraint'
+            locked_version: 'Locked version'
+            recommended_version: 'Recommended version'
+            status: 'Status'
+        status:
+            up_to_date: 'Up to date'
+            outdated: 'Outdated'
+            unknown: 'Unknown'
 
 manifest:
     index:
@@ -112,6 +132,34 @@ manifest:
             dependency_manager: 'Dependency manager'
             lockfile: 'Lockfile'
             dependencies: 'Dependencies'
+
+technology:
+    index:
+        title: 'Technologies'
+        subtitle: '{0} No technologies tracked|{1} One technology tracked|]1,Inf[ %count% technologies tracked'
+        table:
+            technology: 'Technology'
+            projects: 'Projects'
+            status: 'Status'
+    show:
+        back_to_technologies: 'Back to technologies'
+        stats:
+            projects: 'Projects'
+            dependencies: 'Dependencies'
+        release_cycles_title: 'Release cycles'
+        cycles_table:
+            cycle: 'Cycle'
+            latest_version: 'Latest version'
+            lts: 'LTS'
+            release_date: 'Release date'
+            end_of_life: 'End of life'
+        projects_title: 'Projects using this technology'
+        projects_empty: 'No project uses this technology yet.'
+        table:
+            project: 'Project'
+            manifest: 'Manifest'
+            version: 'Version'
+            status: 'Status'
 
 vendor:
     index:

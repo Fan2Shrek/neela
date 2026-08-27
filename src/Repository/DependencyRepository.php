@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Dependency;
+use App\Entity\Package;
 use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -73,6 +74,22 @@ class DependencyRepository extends ServiceEntityRepository
             ->andWhere('m.project = :project')
             ->setParameter('project', $project)
             ->orderBy('pkg.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Dependency[]
+     */
+    public function findByPackageWithProject(Package $package): array
+    {
+        return $this->createQueryBuilder('d')
+            ->addSelect('m', 'p')
+            ->join('d.manifest', 'm')
+            ->join('m.project', 'p')
+            ->andWhere('d.package = :package')
+            ->setParameter('package', $package)
+            ->orderBy('p.name', 'ASC')
             ->getQuery()
             ->getResult();
     }

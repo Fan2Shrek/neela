@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ package.vendor.name }}/{{ package.name }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <a class="text-muted" href="{{ path('app_package_index') }}">&larr; {{ 'package.show.back_to_packages'|trans }}</a>
+                <h1>{{ package.vendor.name }}/{{ package.name }}</h1>
+                <p class="dashboard__subtitle">
+                    <span class="badge badge--neutral">{{ package.vendor.dependencyManager.name }}</span>
+                </p>
+            </div>
+        </header>
+
+        <section class="stat-tiles">
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ projectCount }}</span>
+                <span class="stat-tile__label">{{ 'package.show.stats.projects'|trans }}</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ dependencyCount }}</span>
+                <span class="stat-tile__label">{{ 'package.show.stats.dependencies'|trans }}</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-tile__value">{{ latestVersion ?: '—' }}</span>
+                <span class="stat-tile__label">{{ 'package.show.stats.latest_version'|trans }}</span>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'package.show.projects_title'|trans }}</h2>
+            {% if rows is empty %}
+                <p class="empty-state">{{ 'package.show.projects_empty'|trans }}</p>
+            {% else %}
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'package.show.table.project'|trans }}</th>
+                            <th>{{ 'package.show.table.manifest'|trans }}</th>
+                            <th>{{ 'package.show.table.constraint'|trans }}</th>
+                            <th>{{ 'package.show.table.locked_version'|trans }}</th>
+                            <th>{{ 'package.show.table.recommended_version'|trans }}</th>
+                            <th>{{ 'package.show.table.status'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td class="projects-table__name"><a href="{{ path('app_project_show', {id: row.dependency.manifest.project.id}) }}">{{ row.dependency.manifest.project.name }}</a></td>
+                                <td>{{ row.dependency.manifest.path }}</td>
+                                <td>{{ row.dependency.constraint }}</td>
+                                <td>{{ row.dependency.lockedVersion }}</td>
+                                <td>
+                                    {% if row.latestVersion %}
+                                        {{ row.latestVersion }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge badge--{{ row.status }}">{{ ('package.show.status.' ~ row.status)|trans }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

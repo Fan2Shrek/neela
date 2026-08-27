@@ -26,6 +26,7 @@ final class Sidebar
             ['route' => 'app_dashboard', 'label' => 'nav.dashboard', 'icon' => 'tabler:layout-dashboard'],
             ['route' => 'app_project_index', 'label' => 'nav.projects', 'icon' => 'tabler:folder', 'activeRoutes' => ['app_project_index', 'app_project_new']],
             ['route' => 'app_manifest_index', 'label' => 'nav.manifests', 'icon' => 'tabler:file-text'],
+            ['route' => 'app_technology_index', 'label' => 'nav.technologies', 'icon' => 'tabler:stack-2', 'activeRoutes' => ['app_technology_index', 'app_technology_show']],
             ['route' => 'app_package_index', 'label' => 'nav.packages', 'icon' => 'tabler:package'],
             ['route' => 'app_vendor_index', 'label' => 'nav.vendors', 'icon' => 'tabler:building'],
             ['route' => 'app_scan_index', 'label' => 'nav.scans', 'icon' => 'tabler:history'],

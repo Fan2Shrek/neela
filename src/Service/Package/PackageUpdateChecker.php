@@ -32,4 +32,18 @@ final class PackageUpdateChecker
 
         return Semver::rsort($satisfying)[0];
     }
+
+    /**
+     * Highest known version overall, ignoring any constraint.
+     *
+     * @param string[] $availableVersions
+     */
+    public function findLatest(array $availableVersions): ?string
+    {
+        if ([] === $availableVersions) {
+            return null;
+        }
+
+        return Semver::rsort($availableVersions)[0];
+    }
 }

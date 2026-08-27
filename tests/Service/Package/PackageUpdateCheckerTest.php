@@ -63,4 +63,16 @@ final class PackageUpdateCheckerTest extends TestCase
         self::assertNull($this->checker->findLatestSatisfying($versions, 'git+https://github.com/facebook/react.git'));
         self::assertNull($this->checker->findLatestSatisfying($versions, 'latest'));
     }
+
+    public function testFindLatestIgnoresConstraintsEntirely(): void
+    {
+        $versions = ['v7.3.1', 'v7.3.10', 'v8.0.0', 'v8.1.5'];
+
+        self::assertSame('v8.1.5', $this->checker->findLatest($versions));
+    }
+
+    public function testFindLatestReturnsNullWhenNoVersionsAreAvailable(): void
+    {
+        self::assertNull($this->checker->findLatest([]));
+    }
 }

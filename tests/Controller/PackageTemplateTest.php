@@ -41,6 +41,7 @@ final class PackageTemplateTest extends KernelTestCase
         $composer = new DependencyManager('Composer');
         $vendor = new Vendor('symfony', $composer);
         $package = new Package('console', $vendor);
+        (new \ReflectionProperty(Package::class, 'id'))->setValue($package, 1);
 
         $html = $twig->render('package/index.html.twig', [
             'rows' => [

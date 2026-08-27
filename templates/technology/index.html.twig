@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'technology.index.title'|trans }} — Neela{% endblock %}
+
+{% block body %}
+    <div class="dashboard">
+        <header class="dashboard__header">
+            <div>
+                <h1>{{ 'technology.index.title'|trans }}</h1>
+                <p class="dashboard__subtitle">{{ 'technology.index.subtitle'|trans({}, null, null, technologyCount) }}</p>
+            </div>
+        </header>
+
+        <section class="projects">
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'technology.index.table.technology'|trans }}</th>
+                        <th>{{ 'technology.index.table.projects'|trans }}</th>
+                        <th>{{ 'technology.index.table.status'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td class="projects-table__name"><a href="{{ path('app_technology_show', {technology: row.technology.value}) }}">{{ row.technology.getLabel() }}</a></td>
+                            <td>{{ row.projectCount }}</td>
+                            <td>
+                                {% for status in row.statuses %}
+                                    <span class="badge badge--{{ status }}">{{ ('technology_support_status.' ~ status)|trans }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+{% endblock %}

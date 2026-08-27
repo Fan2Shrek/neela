@@ -49,6 +49,19 @@ class PackageRepository extends ServiceEntityRepository
         return $counts;
     }
 
+    public function findOneByVendorAndName(string $vendorName, string $packageName): ?Package
+    {
+        return $this->createQueryBuilder('p')
+            ->addSelect('v')
+            ->join('p.vendor', 'v')
+            ->andWhere('v.name = :vendorName')
+            ->andWhere('p.name = :packageName')
+            ->setParameter('vendorName', $vendorName)
+            ->setParameter('packageName', $packageName)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * Lazily streams package ids from the database instead of hydrating every
      * Package entity into memory at once (as findAll() would).

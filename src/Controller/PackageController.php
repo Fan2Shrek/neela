@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Dependency;
 use App\Entity\Package;
 use App\Repository\DependencyManagerRepository;
 use App\Repository\DependencyRepository;
 use App\Repository\PackageRepository;
+use App\Repository\VersionRepository;
+use App\Service\Package\PackageUpdateChecker;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 final class PackageController extends AbstractController
 {
@@ -19,11 +23,13 @@ final class PackageController extends AbstractController
         private readonly PackageRepository $packageRepository,
         private readonly DependencyRepository $dependencyRepository,
         private readonly DependencyManagerRepository $dependencyManagerRepository,
+        private readonly VersionRepository $versionRepository,
+        private readonly PackageUpdateChecker $packageUpdateChecker,
     ) {
     }
 
     #[Route('/packages', name: 'app_package_index', methods: ['GET'])]
-    public function __invoke(Request $request): Response
+    public function index(Request $request): Response
     {
         $search = trim((string) $request->query->get('search', ''));
         $dependencyManagerName = trim((string) $request->query->get('dependency_manager', ''));
@@ -63,6 +69,40 @@ final class PackageController extends AbstractController
             'dependencyManagerName' => $dependencyManagerName,
             'dependencyManagers' => $this->dependencyManagerRepository->findAll(),
             'isFiltered' => '' !== $search || '' !== $dependencyManagerName,
+        ]);
+    }
+
+    #[Route('/packages/{id}', name: 'app_package_show', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    public function show(Package $package): Response
+    {
+        $dependencies = $this->dependencyRepository->findByPackageWithProject($package);
+        $stableVersions = $this->versionRepository->findStableVersionsIndexedByPackageId([$package->getId()])[$package->getId()] ?? [];
+
+        $rows = array_map(function (Dependency $dependency) use ($stableVersions): array {
+            $latestVersion = $this->packageUpdateChecker->findLatestSatisfying($stableVersions, $dependency->getConstraint());
+
+            $status = match (true) {
+                null === $latestVersion => 'unknown',
+                $dependency->getLockedVersion() === $latestVersion => 'up_to_date',
+                default => 'outdated',
+            };
+
+            return [
+                'dependency' => $dependency,
+                'latestVersion' => $latestVersion,
+                'status' => $status,
+            ];
+        }, $dependencies);
+
+        return $this->render('package/show.html.twig', [
+            'package' => $package,
+            'rows' => $rows,
+            'dependencyCount' => \count($dependencies),
+            'projectCount' => \count(array_unique(array_map(
+                static fn (Dependency $dependency): string => (string) $dependency->getManifest()->getProject()->getId(),
+                $dependencies,
+            ))),
+            'latestVersion' => $this->packageUpdateChecker->findLatest($stableVersions),
         ]);
     }
 }
