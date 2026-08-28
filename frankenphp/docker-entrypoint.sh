@@ -36,6 +36,12 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		if find ./migrations -iname '*.php' -print -quit | grep --quiet .; then
 			php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 		fi
+
+		# Best-effort: a fresh install shouldn't wait a week for the first scheduled
+		# refresh (src/Schedule.php) before showing any technology support data. Never
+		# block startup on this — endoflife.date being briefly unreachable on first boot
+		# shouldn't stop the app from coming up.
+		php bin/console app:technology:warmup --no-interaction || true
 	fi
 
 	echo 'PHP app ready!'
