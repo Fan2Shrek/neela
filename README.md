@@ -1,87 +1,89 @@
 # Neela
 
-**Neela** est un dashboard de **monitoring des dépendances** pour vos projets logiciels. Il répond à une question simple :
+**Neela** is a **dependency monitoring** dashboard for your software projects. It answers a simple question:
 
-> Parmi tous mes projets, lesquels ont des dépendances qui peuvent être mises à jour ?
+> Among all my projects, which ones have dependencies that can be updated?
 
-Neela **n'automatise pas les mises à jour**. Il ne crée ni branche, ni commit, ni Pull Request. Il se connecte à vos dépôts, analyse leurs manifests de dépendances, et centralise le résultat dans une interface unique. C'est un observateur, pas un bot comme Dependabot ou Renovate.
+Neela **does not automate updates**. It doesn't create branches, commits, or Pull Requests. It connects to your repositories, analyzes their dependency manifests, and centralizes the results in a single interface. It's an observer, not a bot like Dependabot or Renovate.
 
-Le projet est open source et pensé pour être **self-hostable via Docker**.
+The project is open source and designed to be **self-hostable via Docker**.
 
-## Exemple
+## Screenshot
+
+<!-- TODO: add a screenshot of the dashboard here -->
+
+## Example
 
 ```text
 NEELA — Dependency Monitor
 
-127 projets analysés
+127 projects analyzed
 
-🔴 8 projets nécessitent une attention importante
-🟠 23 projets ont des mises à jour
-🟢 96 projets sont à jour
+🔴 8 projects need significant attention
+🟠 23 projects have updates available
+🟢 96 projects are up to date
 ```
 
-Puis, projet par projet :
+Then, project by project:
 
 ```text
 site-client-a
 
 symfony/console
-  installé : 6.4.18
-  compatible : 6.4.21
-  type : PATCH
+  installed: 6.4.18
+  compatible: 6.4.21
+  type: PATCH
 
 laravel/framework
-  installé : 11.35.0
-  compatible : 11.42.0
-  type : MINOR
+  installed: 11.35.0
+  compatible: 11.42.0
+  type: MINOR
 ```
 
-## Fonctionnalités
+## Features
 
-- **Import de projets** GitHub par lien SSH (authentification par token, configurable depuis la page Paramètres)
-- **Découverte automatique des manifests** dans un repo : `composer.json`/`composer.lock`, `package.json`/`package-lock.json`
-- **Résolution des dépendances** en confrontant la version verrouillée (lockfile) à la contrainte déclarée et aux versions disponibles sur le registre (Packagist, npm), avec classement **patch / minor / major**
-- **Détection de technologies** (Symfony, Laravel, React, Vue pour l'instant) avec statut de support/fin de vie via [endoflife.date](https://endoflife.date)
-- **Dashboard global**, vues par projet, par manifest, par package, par vendor, par technologie, historique des scans
-- **Scans asynchrones** (Symfony Messenger) pour ne jamais bloquer l'interface
-- Interface en français et en anglais
+- **Project import** from GitHub via SSH link (token authentication, configurable from the Settings page)
+- **Automatic manifest discovery** in a repo: `composer.json`/`composer.lock`, `package.json`/`package-lock.json`
+- **Dependency resolution** by comparing the locked version (lockfile) against the declared constraint and the versions available on the registry (Packagist, npm), with **patch / minor / major** classification
+- **Technology detection** (Symfony, Laravel, React, Vue for now) with support/end-of-life status via [endoflife.date](https://endoflife.date)
+- **Global dashboard**, per-project, per-manifest, per-package, per-vendor, and per-technology views, plus scan history
+- **Asynchronous scans** (Symfony Messenger) so the interface is never blocked
+- Interface available in French and English
 
-### Ce que Neela ne fait pas (pas encore, ou pas par design)
+### What Neela doesn't do (not yet, or not by design)
 
-- Pas de détection de vulnérabilités (à venir)
-- Pas de découverte automatique des repos d'un compte/organisation GitHub — l'import se fait projet par projet
-- Pas de scans périodiques planifiés — un scan se déclenche à l'import ou manuellement via "Rescan"
-- Pas de gestionnaires de dépendances autres que Composer et npm pour l'instant (Cargo, PyPI... prévus)
-- Aucune modification de vos dépôts : lecture seule, toujours
+- No vulnerability detection (coming soon)
+- No automatic discovery of repos from a GitHub account/organization — import is done project by project
+- No scheduled periodic scans — a scan is triggered on import or manually via "Rescan"
+- No dependency managers other than Composer and npm for now (Cargo, PyPI... planned)
+- No modification of your repositories: read-only, always
 
 ## Stack
 
-- **Backend** : Symfony 8.1, PHP 8.5, Doctrine ORM, PostgreSQL, Symfony Messenger
-- **Frontend** : Twig, Stimulus, Symfony UX — pas de SPA, volontairement simple
-- **Runtime** : [FrankenPHP](https://frankenphp.dev) + Caddy (HTTPS automatique, HTTP/3)
-- **Déploiement** : Docker / Docker Compose
+- **Backend**: Symfony 8.1, PHP 8.5, Doctrine ORM, PostgreSQL, Symfony Messenger
+- **Frontend**: Twig, Stimulus, Symfony UX — no SPA, intentionally simple
+- **Runtime**: [FrankenPHP](https://frankenphp.dev) + Caddy (automatic HTTPS, HTTP/3)
+- **Deployment**: Docker / Docker Compose
 
 ## Self-hosting
 
-L'image officielle est publiée sur Docker Hub : [`sruuua/neela`](https://hub.docker.com/r/sruuua/neela).
+The official image is published on Docker Hub: [`sruuua/neela`](https://hub.docker.com/r/sruuua/neela).
 
-Un déploiement minimal nécessite trois services : l'application, un worker qui consomme les scans en tâche de fond, et une base PostgreSQL. Aucune infrastructure supplémentaire (queue externe, cache...) n'est requise : par défaut, la queue de messages réutilise la base de données.
+A minimal deployment requires three services: the application, a worker that consumes scans in the background, and a PostgreSQL database. No additional infrastructure (external queue, cache...) is required: by default, the message queue reuses the database.
 
 ```yaml
 # compose.yml
 services:
   app:
     image: sruuua/neela:latest
-    restart: unless-stopped
+    pull_policy: always
     environment:
       SERVER_NAME: ${SERVER_NAME:-:80}
       APP_SECRET: ${APP_SECRET}
       DATABASE_URL: postgresql://${POSTGRES_USER:-neela}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB:-neela}?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default
-      # Optionnel : token GitHub par défaut (peut aussi être défini depuis la page Paramètres)
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       database:
         condition: service_healthy
@@ -93,11 +95,7 @@ services:
       APP_SECRET: ${APP_SECRET}
       DATABASE_URL: postgresql://${POSTGRES_USER:-neela}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB:-neela}?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-    # -d memory_limit=512M est nécessaire : le memory_limit par défaut de l'image (128M) est
-    # plus bas que le seuil --memory-limit ci-dessous, donc PHP tuerait le process en OOM avant
-    # que Messenger n'ait la moindre chance de redémarrer proprement, laissant des scans bloqués.
-    command: php -d memory_limit=512M bin/console messenger:consume async --time-limit=3600 --memory-limit=256M
+    command: php -d memory_limit=512M bin/console messenger:consume --all --time-limit=3600 --memory-limit=256M
     depends_on:
       database:
         condition: service_healthy
@@ -122,41 +120,40 @@ volumes:
   database_data:
 ```
 
-Puis, à côté de ce `compose.yml`, un fichier `.env` :
+Then, alongside this `compose.yml`, an `.env` file:
 
 ```dotenv
 POSTGRES_PASSWORD=change-me
 APP_SECRET=generate-a-random-secret
-# GITHUB_TOKEN=ghp_xxx
 ```
 
-`APP_SECRET` peut être généré avec `openssl rand -hex 32`.
+`APP_SECRET` can be generated with `openssl rand -hex 32`.
 
-Démarrage :
+Startup:
 
 ```console
 docker compose up -d
 ```
 
-Les migrations de base de données s'appliquent automatiquement au démarrage du container `app`. Neela est ensuite accessible sur `http://localhost:8080`.
+Database migrations are applied automatically when the `app` container starts. Neela is then accessible at `http://localhost:8081`.
 
 > [!TIP]
-> Si vous avez un nom de domaine pointant vers votre serveur, mettez `SERVER_NAME=votre-domaine.example.com`, exposez les ports 80/443 sur le service `app`, et ajoutez deux volumes (`caddy_data:/data`, `caddy_config:/config`) pour que les certificats persistent entre les redémarrages : Caddy provisionnera alors automatiquement du HTTPS via Let's Encrypt.
+> If you have a domain name pointing to your server, set `SERVER_NAME=your-domain.example.com`, expose ports 80/443 on the `app` service, and add two volumes (`caddy_data:/data`, `caddy_config:/config`) so certificates persist across restarts: Caddy will then automatically provision HTTPS via Let's Encrypt.
 
-Une fois démarré, allez dans **Paramètres** pour renseigner votre token d'accès personnel GitHub (nécessaire pour les dépôts privés et pour éviter les limites de taux de l'API GitHub), puis ajoutez un projet depuis **Projets → Nouveau projet**.
+Once started, go to **Settings** to set your GitHub personal access token (required for private repositories and to avoid GitHub API rate limits), then add a project from **Projects → New project**.
 
-## Développement local
+## Local development
 
-Ce dépôt est basé sur [Symfony Docker](https://github.com/dunglas/symfony-docker) et fournit un environnement de développement complet (Dev Container inclus) :
+This repository is based on [Symfony Docker](https://github.com/dunglas/symfony-docker) and provides a complete development environment (Dev Container included):
 
-1. [Installer Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
+1. [Install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
 2. `docker compose build --pull --no-cache`
 3. `docker compose up --wait`
-4. Ouvrir `https://localhost` (accepter le certificat TLS auto-généré)
-5. `docker compose down --remove-orphans` pour arrêter
+4. Open `https://localhost` (accept the self-signed TLS certificate)
+5. `docker compose down --remove-orphans` to stop
 
-Docs complémentaires héritées du template : [options disponibles](docs/options.md), [services additionnels](docs/extra-services.md), [Xdebug](docs/xdebug.md), [certificats TLS](docs/tls.md), [MySQL au lieu de PostgreSQL](docs/mysql.md), [troubleshooting](docs/troubleshooting.md), [agents de code IA](docs/agents.md).
+Additional docs inherited from the template: [available options](docs/options.md), [extra services](docs/extra-services.md), [Xdebug](docs/xdebug.md), [TLS certificates](docs/tls.md), [MySQL instead of PostgreSQL](docs/mysql.md), [troubleshooting](docs/troubleshooting.md), [AI coding agents](docs/agents.md).
 
-## Licence
+## License
 
 MIT.
