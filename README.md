@@ -10,7 +10,7 @@ The project is open source and designed to be **self-hostable via Docker**.
 
 ## Screenshot
 
-<!-- TODO: add a screenshot of the dashboard here -->
+<img width="934" height="561" alt="image" src="https://github.com/user-attachments/assets/80bcd195-1bd6-4e58-bbbd-00666a5e8eb4" />
 
 ## Example
 
